@@ -206,8 +206,8 @@ public class Engine {
 		
 	}
 	private void setUpResources() {
-		tex_player = loadTexture("player_big");
-		tex_player2 = loadTexture("player2_big");
+		tex_player = loadTexture("player2_big");
+		tex_player2 = loadTexture("player3_big");
 		
 	}
 	private void setUpEntities() {
@@ -255,7 +255,7 @@ public class Engine {
 		player.draw(tex_player,getStep(50, 5),gravplier);
 		
 		glColor3f(0.6f,1f,0.3f);
-		player2.draw(tex_player,getStep(50, 5),gravplier);	
+		player2.draw(tex_player2,getStep(50, 5),gravplier);	
 
 		
 	}

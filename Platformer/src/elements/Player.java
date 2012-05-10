@@ -35,24 +35,30 @@ public class Player extends AbstractGravityMoveableEntity {
 		if(gravplier==1) {
 			glBegin(GL_QUADS);
 		        glTexCoord2f(0, 0);
-		        glVertex2i((int) x, (int) y); // Upper-left
-		        glTexCoord2f(1, 0);
-		        glVertex2i((int) (x+width), (int) y); // Upper-right
-		        glTexCoord2f(1, 1);
-		        glVertex2i((int) (x+width), (int) (y+height+2*(-1+step))); // Bottom-right
-		        glTexCoord2f(0, 1);
 		        glVertex2i((int) x, (int) (y+height+2*(-1+step))); // Bottom-left
+		        glTexCoord2f(1, 0);
+		        glVertex2i((int) (x+width), (int) (y+height+2*(-1+step))); // Bottom-right
+		        glTexCoord2f(1, 1);
+		        glVertex2i((int) (x+width), (int) y); // Upper-right
+		        glTexCoord2f(0, 1);
+		        glVertex2i((int) x, (int) y); // Upper-left
+
+
+
 		    glEnd();
 		} else {
 		glBegin(GL_QUADS);
-	        glTexCoord2f(0, 0);
-	        glVertex2i((int) x, (int) y+2*(-1+step)); // Upper-left
-	        glTexCoord2f(1, 0);
-	        glVertex2i((int) (x+width), (int) y+2*(-1+step)); // Upper-right
-	        glTexCoord2f(1, 1);
-	        glVertex2i((int) (x+width), (int) (y+height)); // Bottom-right
 	        glTexCoord2f(0, 1);
 	        glVertex2i((int) x, (int) (y+height)); // Bottom-left
+	        glTexCoord2f(1, 1);
+	        glVertex2i((int) (x+width), (int) (y+height)); // Bottom-right
+	        glTexCoord2f(1, 0);
+	        glVertex2i((int) (x+width), (int) y+2*(-1+step)); // Upper-right
+	        glTexCoord2f(0, 0);
+	        glVertex2i((int) x, (int) y+2*(-1+step)); // Upper-left
+
+
+
 	    glEnd();
 		}
 	}
