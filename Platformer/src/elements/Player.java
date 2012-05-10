@@ -1,9 +1,6 @@
 package elements;
+import java.util.Random;
 
-import java.awt.Color;
-import java.awt.Rectangle;
-
-import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.opengl.Texture;
 
 import entities.AbstractGravityMoveableEntity;
@@ -15,13 +12,20 @@ public class Player extends AbstractGravityMoveableEntity {
 	//player test
 
 	public boolean onFeet = true;
-	protected Color color;
+	float red,green,blue;
 	
 	
 	public Player(double x, double y, double width, double height) {
 		super(x, y, width, height);
 		setMAX_DY(1);
-		color = new Color(1f,1f,1f);
+		
+		//set random color:
+		Random random = new Random();
+		red=0.5f+(random.nextFloat()/2);
+		green=0.5f+(random.nextFloat()/2);
+		blue=0.8f;
+		System.out.println("Color: "+red+","+green+","+blue);
+		
 	}
 	
 	
@@ -31,13 +35,8 @@ public class Player extends AbstractGravityMoveableEntity {
 		
 	}
 	
-	public void draw(float red, float green, float blue) {
-		glColor3f(red, green, blue);
-		glRecti((int) x, (int)y, (int)x + (int) width, (int) y + (int) height);
-	}
-	
 	public void draw(Texture texture, int step, float gravplier) {
-		//test
+		glColor3d(red,green,blue);
 		texture.bind();
 		if(gravplier==1) {
 			glBegin(GL_QUADS);
@@ -54,19 +53,16 @@ public class Player extends AbstractGravityMoveableEntity {
 
 		    glEnd();
 		} else {
-		glBegin(GL_QUADS);
-	        glTexCoord2f(0, 1);
-	        glVertex2i((int) x, (int) (y+height)); // Bottom-left
-	        glTexCoord2f(1, 1);
-	        glVertex2i((int) (x+width), (int) (y+height)); // Bottom-right
-	        glTexCoord2f(1, 0);
-	        glVertex2i((int) (x+width), (int) y+2*(-1+step)); // Upper-right
-	        glTexCoord2f(0, 0);
-	        glVertex2i((int) x, (int) y+2*(-1+step)); // Upper-left
-
-
-
-	    glEnd();
+			glBegin(GL_QUADS);
+		        glTexCoord2f(0, 1);
+		        glVertex2i((int) x, (int) (y+height)); // Bottom-left
+		        glTexCoord2f(1, 1);
+		        glVertex2i((int) (x+width), (int) (y+height)); // Bottom-right
+		        glTexCoord2f(1, 0);
+		        glVertex2i((int) (x+width), (int) y+2*(-1+step)); // Upper-right
+		        glTexCoord2f(0, 0);
+		        glVertex2i((int) x, (int) y+2*(-1+step)); // Upper-left
+		    glEnd();
 		}
 	}
 	
@@ -88,23 +84,6 @@ public class Player extends AbstractGravityMoveableEntity {
 		return out;
 	}
 
-
-	public int getRed() {
-		return color.getGreen();
-	}
-	public int getGreen() {
-		return color.getGreen();
-	}
-	public int getBlue() {
-		return color.getGreen();
-	}
-	public void setColor(float red, float green, float blue) {
-		color = new Color(red,green,blue);
-	}
-	
-	
-	
-	//Collision detection methods
 	
 
 

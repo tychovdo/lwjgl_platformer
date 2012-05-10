@@ -1,7 +1,5 @@
 package levels;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -9,21 +7,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-
 import elements.Wall;
 
 public class LevelLoader {
 
 	
-	public static List<Wall> load(int level) {
+	public static List<Wall> load(String levelpack, int level) {
 		List<Wall> adder = new ArrayList<Wall>();
 		
-		adder = ReadFileAsBytes(level + ".lvl");
+		adder = ReadFileAsBytes(levelpack + "/" + level + ".lvl");
 //		int dws = 20;
 //		
 //		switch(level) {
@@ -108,11 +102,10 @@ public class LevelLoader {
 	          }
 	        }
 	        catch (EOFException eof) {
-	          System.out.println ("End of File");
+	          //System.out.println ("End of File");
 	          break;
 	        }
-	        // Print out the integer, double data pairs.
-	        System.out.printf ("%3d, ", i_data);
+	        //System.out.printf ("%3d, ", i_data);
 	      }
 	      data_in.close ();
 	    } catch  (IOException e) {

@@ -1,6 +1,5 @@
 package elements;
 
-import static org.lwjgl.opengl.GL11.glColor3f;
 import static org.lwjgl.opengl.GL11.glRectd;
 import entities.AbstractEntity;
 

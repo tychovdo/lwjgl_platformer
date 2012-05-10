@@ -1,7 +1,5 @@
 package entities;
 
-import org.newdawn.slick.opengl.Texture;
-
 public interface Entity {
 	public void draw();
 	// See episode 7

@@ -4,19 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.Random;
-
 import levels.LevelLoader;
 
 import org.lwjgl.*;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.*;
-import org.newdawn.slick.SlickException;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
@@ -31,6 +27,10 @@ public class Engine {
 	public static final int HEIGHT = 600;
 	public static final double GRAVITY = -0.035;
 	
+	public String levelpack;
+	public int level;
+	public int playerAmount;
+	
 	private int gravplier = 1; //gravity multiplier (gravplier=-1 on reversed gravity)
 	
 	private boolean gameloop = true;
@@ -41,12 +41,12 @@ public class Engine {
 	private long lastFrame;
 	private int levelPreviousFrame = 1337;
 	
-	public int level;
-	private int playerAmount;
+
 	
 	private List<Texture> textures = new ArrayList<Texture>();
 	private List<Player> players = new ArrayList<Player>();
 	private List<Wall> walls = new ArrayList<Wall>();
+
 	
 
 	
@@ -56,6 +56,7 @@ public class Engine {
 		while (gameloop) {
 
 			input();	
+			loadLevel();
 			logic(getDelta());
 			render();		
 			
@@ -137,7 +138,6 @@ public class Engine {
 		if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
 			if(shiftReady) {
 				gravplier = -gravplier;
-				System.out.println("gravplier: "+gravplier);
 				shiftReady=false;
 				
 			}
@@ -177,8 +177,14 @@ public class Engine {
 			Properties prop = new Properties();
     		prop.load(propfile);
             //get the property value and load it
+    		levelpack = prop.getProperty("level_pack");
             level = Integer.parseInt(prop.getProperty("first_level"));
     		playerAmount = Integer.parseInt(prop.getProperty("amount_of_players"));
+    		System.out.println("======== Loading game ========");
+    		System.out.println("Levelpack:          " + levelpack);
+    		System.out.println("First level:        " + level);
+    		System.out.println("Amount of players:  " + playerAmount);
+    		
     	} catch (IOException ex) {
     		ex.printStackTrace();
         }
@@ -207,12 +213,13 @@ public class Engine {
 		for(int i=0;i<playerAmount;i++) {
 			textures.add(loadTexture("/sprites/char"+i+".png"));
 		}
+		textures.add(loadTexture("/sprites/player_grey.png"));
 		
 	}
 	private void setUpEntities() {
 		//load entities
 		
-		//load players
+			//load players
 		for(int i=0;i<playerAmount;i++) {
 			players.add(new Player(i*100+100,100,32,32));	
 		}
@@ -237,15 +244,14 @@ public class Engine {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		
-		
-		renderLevel();
-		
 		//draw Non-Textured entities:
 		glDisable(GL_TEXTURE_2D);
-		
+
+			//draw background
 		glColor3f(0.1f,0.2f,0.6f);
 		glRectd(0, 0, WIDTH, HEIGHT);
 		
+			//draw walls
 		glColor3f(0f, 0f, 0.2f);
 		for (Wall wall : walls) {
 			wall.draw();
@@ -253,19 +259,19 @@ public class Engine {
 
 		//draw Textured entities:
 		glEnable(GL_TEXTURE_2D);
-		//color variation: 		//glColor3f(0.6f,1f,0.3f);;
+		
+			//draw players
 		for(int i=0;i<playerAmount;i++) {
-			glColor3d(players.get(i).getRed(),players.get(i).getGreen(),players.get(i).getRed());
+			//glColor3d(players.get(i).color.getRed(), players.get(i).color.getGreen(), players.get(i).color.getBlue());
 			players.get(i).draw(textures.get(i),getStep(50, 5),gravplier);	
 		}
 
 
 		
 	}
-	private void renderLevel() {
+	private void loadLevel() {
 		if(levelPreviousFrame!=level) {
 			walls.clear();
-			System.out.println(level);
 			int dws = 20; //default wall size
 			//borders
 			walls.add(new Wall(0,0,WIDTH,dws)); //floor
@@ -274,7 +280,7 @@ public class Engine {
 			walls.add(new Wall(0,HEIGHT-dws,WIDTH, dws)); //roof
 			
 			//platforms
-			walls.addAll(LevelLoader.load(level));
+			walls.addAll(LevelLoader.load(levelpack, level));
 			levelPreviousFrame=level;
 			//}
 		}
@@ -291,23 +297,26 @@ public class Engine {
 		}
 	}
 	private void logic(int delta) {
+		
+			//update player location and add gravity acceleration
 		for (int i=0;i<playerAmount;i++) {
 			players.get(i).update(delta);	
 			players.get(i).setAY(GRAVITY*gravplier);
 		}
-
 		
-		
+			//cooldown for cheatbutton
 		if(keyTimer>0) {
 			keyTimer--;
 		}
 		
+			//activate shiftReady if player_0 lands on his feet. (or head if gravity is reversed)
 		if(!shiftReady) {
 			if(((gravplier==1) && (players.get(0).onFeet)) || ((gravplier==-1) && (!players.get(0).onFeet))) {
 				shiftReady = true;
-				System.out.println("Ready to shift");
+				System.out.println("Ready to shift gravity");
 			}
 		}
+			//collision detection (players ==> walls)
 		for(int i=0;i<playerAmount;i++) {
 			for (Wall wall : walls) {	
 				while(players.get(i).intersect_dir(wall)!=0) {
