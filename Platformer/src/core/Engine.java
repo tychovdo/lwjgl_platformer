@@ -4,8 +4,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Random;
 
 import levels.LevelLoader;
@@ -35,9 +38,7 @@ public class Engine {
 	private int keyTimer = 0;
 	
 	private long startTime; 
-	
 	private long lastFrame;
-	
 	private int levelPreviousFrame = 1337;
 	
 	public int level;
@@ -50,11 +51,10 @@ public class Engine {
 
 	
 	public Engine() {
-		startTime = getTime();
-		
+
 		init();
 		while (gameloop) {
-			loadLevel();
+
 			input();	
 			logic(getDelta());
 			render();		
@@ -81,26 +81,6 @@ public class Engine {
 		setUpResources();
 		setUpEntities();
 		setUpTimer();
-
-	}
-	
-	private void loadLevel() {
-		if(levelPreviousFrame!=level) {
-			walls.clear();
-			System.out.println(level);
-			int dws = 20; //default wall size
-			//borders
-			walls.add(new Wall(0,0,WIDTH,dws)); //floor
-			walls.add(new Wall(0,0,dws,HEIGHT)); //left wall
-			walls.add(new Wall(WIDTH-dws,0,dws,HEIGHT)); //right wal
-			walls.add(new Wall(0,HEIGHT-dws,WIDTH, dws)); //roof
-			
-			//platforms
-			walls.addAll(LevelLoader.load(level));
-			levelPreviousFrame=level;
-			//}
-		}
-		
 	}
 	
 	private void input() { //external control settings, dynamic player amount
@@ -178,50 +158,70 @@ public class Engine {
 	private long getTime() {
 		return (Sys.getTime() * 1000) / Sys.getTimerResolution();
 	}
-
 	private int getDelta() {
 		long currentTime = getTime();
 		int delta = (int) (currentTime - lastFrame);
 		lastFrame = getTime();
 		return delta;
 	}
+	private void setUpTimer() {
+		startTime = getTime();
+	}
+	
 	private void setUpSettings() {
-		level = 3;
-		playerAmount = 2;
+		//load default settings
+		try {
+            //load a properties file
+			URL url = this.getClass().getResource("/config/defaultSettings");
+			FileInputStream propfile = new FileInputStream(url.getFile());	
+			Properties prop = new Properties();
+    		prop.load(propfile);
+            //get the property value and load it
+            level = Integer.parseInt(prop.getProperty("first_level"));
+    		playerAmount = Integer.parseInt(prop.getProperty("amount_of_players"));
+    	} catch (IOException ex) {
+    		ex.printStackTrace();
+        }
 	}
 	private void setUpDisplay() {
+		//initiate display
 		try {
 			Display.setDisplayMode(new DisplayMode(WIDTH, HEIGHT));
-			Display.setTitle("Pong");
+			Display.setTitle("LWJGL Platformer");
 			Display.create();
 		} catch (LWJGLException e) {
 			e.printStackTrace();
 		}
 	}
-
 	private void setUpOpenGL() {
+		//initiate opengl
 		glDisable(GL_DEPTH_TEST);
 		glMatrixMode(GL_PROJECTION);
 		glOrtho(0, WIDTH, 0, HEIGHT, 1, -1);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		glViewport(0, 0, WIDTH, HEIGHT);
-		
+		glViewport(0, 0, WIDTH, HEIGHT);	
 	}
 	private void setUpResources() {
+		//load character textures
 		for(int i=0;i<playerAmount;i++) {
-			textures.add(loadTexture("/sprites/char"+i));
+			textures.add(loadTexture("/sprites/char"+i+".png"));
 		}
 		
 	}
 	private void setUpEntities() {
+		//load entities
+		
+		//load players
 		for(int i=0;i<playerAmount;i++) {
 			players.add(new Player(i*100+100,100,32,32));	
 		}
 	}
-    private Texture loadTexture(String key) {
+    
+	private Texture loadTexture(String filename) {
+    	//return texture from filename
         try {
-                return TextureLoader.getTexture("PNG", new FileInputStream(new File("res/" + key + ".png")));
+                return TextureLoader.getTexture("PNG", new FileInputStream(new File("res/" + filename)));
         } catch (FileNotFoundException e) {
                 e.printStackTrace();
         } catch (IOException e) {
@@ -230,15 +230,15 @@ public class Engine {
         return null;
     }
     
-	private void setUpTimer() {
-		lastFrame = getTime();
-	}
+
 
 	private void render() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		
+		
+		renderLevel();
 		
 		//draw Non-Textured entities:
 		glDisable(GL_TEXTURE_2D);
@@ -260,6 +260,24 @@ public class Engine {
 		}
 
 
+		
+	}
+	private void renderLevel() {
+		if(levelPreviousFrame!=level) {
+			walls.clear();
+			System.out.println(level);
+			int dws = 20; //default wall size
+			//borders
+			walls.add(new Wall(0,0,WIDTH,dws)); //floor
+			walls.add(new Wall(0,0,dws,HEIGHT)); //left wall
+			walls.add(new Wall(WIDTH-dws,0,dws,HEIGHT)); //right wal
+			walls.add(new Wall(0,HEIGHT-dws,WIDTH, dws)); //roof
+			
+			//platforms
+			walls.addAll(LevelLoader.load(level));
+			levelPreviousFrame=level;
+			//}
+		}
 		
 	}
 	
