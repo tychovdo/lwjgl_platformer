@@ -123,7 +123,7 @@ public class Engine {
 		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
 			for(Wall wall : walls) {
 				//if (player.getDY()==0) {
-				if(player.onGround(wall)) {
+				if(player.onGround(wall) || player.onGround(player2)) {
 					player.setDY(0.8);
 				}
 			}
@@ -138,7 +138,7 @@ public class Engine {
 		if (Keyboard.isKeyDown(Keyboard.KEY_W)) {
 			for(Wall wall : walls) {
 				//if (player.getDY()==0) {
-				if(player2.onGround(wall)) {
+				if(player2.onGround(wall) || player.onGround(player2)) {
 					player2.setDY(0.8);
 				}
 			}
@@ -291,8 +291,14 @@ public class Engine {
 		
 		//while(player.intersects(wall) | player.intersects(wall2) | player.intersects(wall3)) {
 		for (Wall wall : walls) {	
-			while(player.intersect_dir(wall)!=0) {
-				switch(player.intersect_dir(wall)) {
+			while(player.intersect_dir(wall)!=0 || (player.intersect_dir(player2)!=0 && player.intersect_dir(player2)!=2)) {
+				int dir;
+				if(player.intersect_dir(player2)!=0) {
+					dir = player.intersect_dir(player2);
+				} else {
+					dir = player.intersect_dir(wall);
+				}
+				switch(dir) {
 					case 1:
 						player.setDX(0);
 						player.setAX(0);
@@ -317,8 +323,14 @@ public class Engine {
 			}
 		}
 		for (Wall wall : walls) {	
-			while(player2.intersect_dir(wall)!=0) {
-				switch(player2.intersect_dir(wall)) {
+			while(player2.intersect_dir(wall)!=0 || (player2.intersect_dir(player)!=0 && player2.intersect_dir(player)!=2)) {
+				int dir;
+				if(player2.intersect_dir(player)!=0) {
+					dir = player2.intersect_dir(player);
+				} else {
+					dir = player2.intersect_dir(wall);
+				}
+				switch(dir) {
 					case 1:
 						player2.setDX(0);
 						player2.setAX(0);
