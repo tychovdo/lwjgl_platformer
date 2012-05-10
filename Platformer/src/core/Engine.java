@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import levels.LevelLoader;
 
@@ -37,15 +38,16 @@ public class Engine {
 	
 	private long lastFrame;
 	
-	private Texture tex_player; 
-	private Texture tex_player2;
-	private Player player;
-	private Player player2;
+	private int levelPreviousFrame = 1337;
 	
-	public int levelPreviousFrame = 1337;
 	public int level;
+	private int playerAmount;
 	
+	private List<Texture> textures = new ArrayList<Texture>();
+	private List<Player> players = new ArrayList<Player>();
 	private List<Wall> walls = new ArrayList<Wall>();
+	
+
 	
 	public Engine() {
 		startTime = getTime();
@@ -101,52 +103,52 @@ public class Engine {
 		
 	}
 	
-	private void input() {
+	private void input() { //external control settings, dynamic player amount
 		
 		//Movement X-axis
 		if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-			player.setDX(-0.35);
+			players.get(0).setDX(-0.35);
 		} else if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-			player.setDX(0.35);
+			players.get(0).setDX(0.35);
 		} else {
-			player.setDX(0);
+			players.get(0).setDX(0);
 		}
 		if (Keyboard.isKeyDown(Keyboard.KEY_A)) {
-			player2.setDX(-0.35);
+			players.get(1).setDX(-0.35);
 		} else if (Keyboard.isKeyDown(Keyboard.KEY_D)) {
-			player2.setDX(0.35);
+			players.get(1).setDX(0.35);
 		} else {
-			player2.setDX(0);
+			players.get(1).setDX(0);
 		}
 		
 		//Movement Y-axis
 		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
 			for(Wall wall : walls) {
-				//if (player.getDY()==0) {
-				if(player.onGround(wall) || player.onGround(player2)) {
-					player.setDY(0.8);
+				//if (players.get(0).getDY()==0) {
+				if(players.get(0).onGround(wall) || players.get(0).onGround(players.get(1))) {
+					players.get(0).setDY(0.8);
 				}
 			}
 		} else if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
 			for(Wall wall : walls) {
-				//if (player.getDY()==0) {
-				if(player.onRoof(wall)) {
-					player.setDY(-0.8);
+				//if (players.get(0).getDY()==0) {
+				if(players.get(0).onRoof(wall)) {
+					players.get(0).setDY(-0.8);
 				}
 			}
 		}
 		if (Keyboard.isKeyDown(Keyboard.KEY_W)) {
 			for(Wall wall : walls) {
-				//if (player.getDY()==0) {
-				if(player2.onGround(wall) || player.onGround(player2)) {
-					player2.setDY(0.8);
+				//if (players.get(0).getDY()==0) {
+				if(players.get(1).onGround(wall) || players.get(0).onGround(players.get(1))) {
+					players.get(1).setDY(0.8);
 				}
 			}
 		} else if (Keyboard.isKeyDown(Keyboard.KEY_S)) {
 			for(Wall wall : walls) {
-				//if (player.getDY()==0) {
-				if(player2.onRoof(wall)) {
-					player2.setDY(-0.8);
+				//if (players.get(0).getDY()==0) {
+				if(players.get(1).onRoof(wall)) {
+					players.get(1).setDY(-0.8);
 				}
 			}
 		}
@@ -185,6 +187,7 @@ public class Engine {
 	}
 	private void setUpSettings() {
 		level = 3;
+		playerAmount = 2;
 	}
 	private void setUpDisplay() {
 		try {
@@ -206,15 +209,15 @@ public class Engine {
 		
 	}
 	private void setUpResources() {
-		tex_player = loadTexture("player2_big");
-		tex_player2 = loadTexture("player3_big");
+		for(int i=0;i<playerAmount;i++) {
+			textures.add(loadTexture("/sprites/char"+i));
+		}
 		
 	}
 	private void setUpEntities() {
-		player = new Player(100,100,32,32);
-		player.setMAX_DY(1);
-		player2 = new Player(200,100,32,32);
-		player2.setMAX_DY(1);
+		for(int i=0;i<playerAmount;i++) {
+			players.add(new Player(i*100+100,100,32,32));	
+		}
 	}
     private Texture loadTexture(String key) {
         try {
@@ -250,12 +253,12 @@ public class Engine {
 
 		//draw Textured entities:
 		glEnable(GL_TEXTURE_2D);
-		
-		glColor3f(1f,1f,1f);
-		player.draw(tex_player,getStep(50, 5),gravplier);
-		
-		glColor3f(0.6f,1f,0.3f);
-		player2.draw(tex_player2,getStep(50, 5),gravplier);	
+		//color variation: 		//glColor3f(0.6f,1f,0.3f);;
+		for(int i=0;i<playerAmount;i++) {
+			glColor3d(players.get(i).getRed(),players.get(i).getGreen(),players.get(i).getRed());
+			players.get(i).draw(textures.get(i),getStep(50, 5),gravplier);	
+		}
+
 
 		
 	}
@@ -270,11 +273,11 @@ public class Engine {
 		}
 	}
 	private void logic(int delta) {
-		player.update(delta);
-		player2.update(delta);	
-		
-		player.setAY(GRAVITY*gravplier);
-		player2.setAY(GRAVITY*gravplier);
+		for (int i=0;i<playerAmount;i++) {
+			players.get(i).update(delta);	
+			players.get(i).setAY(GRAVITY*gravplier);
+		}
+
 		
 		
 		if(keyTimer>0) {
@@ -282,87 +285,39 @@ public class Engine {
 		}
 		
 		if(!shiftReady) {
-			if(((gravplier==1) && (player.onFeet)) || ((gravplier==-1) && (!player.onFeet))) {
+			if(((gravplier==1) && (players.get(0).onFeet)) || ((gravplier==-1) && (!players.get(0).onFeet))) {
 				shiftReady = true;
 				System.out.println("Ready to shift");
 			}
 		}
-		
-		
-		//while(player.intersects(wall) | player.intersects(wall2) | player.intersects(wall3)) {
-		for (Wall wall : walls) {	
-			while(player.intersect_dir(wall)!=0 || (player.intersect_dir(player2)!=0 && player.intersect_dir(player2)!=2)) {
-				int dir;
-				if(player.intersect_dir(player2)!=0) {
-					dir = player.intersect_dir(player2);
-				} else {
-					dir = player.intersect_dir(wall);
-				}
-				switch(dir) {
-					case 1:
-						player.setDX(0);
-						player.setAX(0);
-						player.setX(player.getX()+1);
-					break;
-					case 2:
-						player.setDY(0);
-						player.setAY(0);
-						player.setY(player.getY()-1);
-					break;
-					case 3:
-						player.setDX(0);
-						player.setAX(0);
-						player.setX(player.getX()-1);
-					break;
-					case 4:
-						player.setDY(0);
-						player.setAY(0);
-						player.setY(player.getY()+1);
-					break;
+		for(int i=0;i<playerAmount;i++) {
+			for (Wall wall : walls) {	
+				while(players.get(i).intersect_dir(wall)!=0) {
+					switch(players.get(i).intersect_dir(wall)) {
+						case 1:
+							players.get(i).setDX(0);
+							players.get(i).setAX(0);
+							players.get(i).setX(players.get(i).getX()+1);
+						break;
+						case 2:
+							players.get(i).setDY(0);
+							players.get(i).setAY(0);
+							players.get(i).setY(players.get(i).getY()-1);
+						break;
+						case 3:
+							players.get(i).setDX(0);
+							players.get(i).setAX(0);
+							players.get(i).setX(players.get(i).getX()-1);
+						break;
+						case 4:
+							players.get(i).setDY(0);
+							players.get(i).setAY(0);
+							players.get(i).setY(players.get(i).getY()+1);
+						break;
+					}
 				}
 			}
 		}
-		for (Wall wall : walls) {	
-			while(player2.intersect_dir(wall)!=0 || (player2.intersect_dir(player)!=0 && player2.intersect_dir(player)!=2)) {
-				int dir;
-				if(player2.intersect_dir(player)!=0) {
-					dir = player2.intersect_dir(player);
-				} else {
-					dir = player2.intersect_dir(wall);
-				}
-				switch(dir) {
-					case 1:
-						player2.setDX(0);
-						player2.setAX(0);
-						player2.setX(player2.getX()+1);
-					break;
-					case 2:
-						player2.setDY(0);
-						player2.setAY(0);
-						player2.setY(player2.getY()-1);
-					break;
-					case 3:
-						player2.setDX(0);
-						player2.setAX(0);
-						player2.setX(player2.getX()-1);
-					break;
-					case 4:
-						player2.setDY(0);
-						player2.setAY(0);
-						player2.setY(player2.getY()+1);
-					break;
-				}
-			}
-		}
-//		if(gravplier==1) {
-//			player.setY(player.getY()-1);
-//		} else {
-//			player.setY(player.getY()+1);
-//		}
-		
-		
-		
-		
 	}
 
 
