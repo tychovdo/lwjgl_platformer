@@ -251,7 +251,7 @@ public class Engine {
 		glColor3f(1f,1f,1f);
 		player.draw(tex_player,getStep(50, 5),gravplier);
 		
-		glColor3f(1f,0.2f,1f);
+		glColor3f(0f,0.9f,0.3f);
 		player2.draw(tex_player,getStep(50, 5),gravplier);
 		
 
