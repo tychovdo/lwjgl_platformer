@@ -11,7 +11,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class Player extends AbstractGravityMoveableEntity {
 	
-	
+	//player test
 	protected Rectangle hitbox_left = new Rectangle();
 	protected Rectangle hitbox_top = new Rectangle();
 	protected Rectangle hitbox_right = new Rectangle();
