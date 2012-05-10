@@ -38,6 +38,7 @@ public class Engine {
 	private long lastFrame;
 	
 	private Texture tex_player; 
+	private Texture tex_player2;
 	private Player player;
 	private Player player2;
 	
@@ -205,7 +206,9 @@ public class Engine {
 		
 	}
 	private void setUpResources() {
-		tex_player = loadTexture("player");
+		tex_player = loadTexture("player_big");
+		tex_player2 = loadTexture("player2_big");
+		
 	}
 	private void setUpEntities() {
 		player = new Player(100,100,32,32);
@@ -252,7 +255,7 @@ public class Engine {
 		player.draw(tex_player,getStep(50, 5),gravplier);
 		
 		glColor3f(0.6f,1f,0.4f);
-		player2.draw(tex_player,getStep(50, 5),gravplier);
+		player2.draw(tex_player2,getStep(50, 5),gravplier);
 		
 
 		
