@@ -12,9 +12,7 @@ import levels.LevelLoader;
 import org.lwjgl.*;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.*;
-import org.newdawn.slick.Animation;
 import org.newdawn.slick.SlickException;
-import org.newdawn.slick.SpriteSheet;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
