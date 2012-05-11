@@ -101,7 +101,7 @@ public class Engine {
 		} else {
 			players.get(1).setDX(0);
 		}
-		
+		//.
 		//Movement Y-axis
 		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
 			for(Wall wall : walls) {
