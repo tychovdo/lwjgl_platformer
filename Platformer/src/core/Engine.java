@@ -9,7 +9,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+
+import javax.swing.JOptionPane;
+
 import levels.LevelLoader;
+
+import network.LevelRequest;
+import network.LevelResponse;
+import network.SomeRequest;
+import network.posRequest;
+import network.posResponse;
 
 import org.lwjgl.*;
 import org.lwjgl.input.Keyboard;
@@ -17,10 +26,14 @@ import org.lwjgl.opengl.*;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.Listener;
+
 import elements.LevelSwitcher;
 import elements.Player;
 import elements.Wall;
-import entities.Entity;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -30,11 +43,18 @@ public class Engine {
 	public static final int HEIGHT = 600;
 	public static final double GRAVITY = -0.035;
 	
+	public String server_ip;
+	public int server_port1;
+	public int server_port2;
+	
 	public String levelpack;
 	public int level;
 	public int playerAmount;
 	
+	public int myID;
+	
 	private int gravplier = 1; //gravity multiplier (gravplier=-1 on reversed gravity)
+	private boolean gpCheck = true;
 	
 	private boolean gameloop = true;
 	private boolean shiftReady = true;
@@ -45,7 +65,7 @@ public class Engine {
 	private int levelPreviousFrame = 1337;
 	
 
-	private Texture tex_coin;
+	//private Texture tex_coin;
 	private Texture tex_arrow;
 	
 	private List<Texture> textures = new ArrayList<Texture>();
@@ -53,21 +73,26 @@ public class Engine {
 	private List<Wall> walls = new ArrayList<Wall>();
 	private List<LevelSwitcher> levelswitchers = new ArrayList<LevelSwitcher>();
 
-	
-
+	Client client;
+	Kryo kryo;
 	
 	public Engine() {
-		try {
-			LevelLoader.writeFileAsBytes("levelpack0/1.lvl", LevelLoader.loadHardcodedlevel(1));
-			LevelLoader.writeFileAsBytes("levelpack0/2.lvl", LevelLoader.loadHardcodedlevel(2));
-			LevelLoader.writeFileAsBytes("levelpack0/3.lvl", LevelLoader.loadHardcodedlevel(3));
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		
+		
+		
+//		try {
+//			LevelLoader.writeFileAsBytes("levelpack0/1.lvl", LevelLoader.loadHardcodedlevel(1));
+//			LevelLoader.writeFileAsBytes("levelpack0/2.lvl", LevelLoader.loadHardcodedlevel(2));
+//			LevelLoader.writeFileAsBytes("levelpack0/3.lvl", LevelLoader.loadHardcodedlevel(3));
+//			
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		
+		
 		init();
 		while (gameloop) {
-
+			
 			input();	
 			loadLevel();
 			logic(getDelta());
@@ -89,7 +114,9 @@ public class Engine {
 
 
 	private void init() {
+		
 		setUpSettings();
+		setUpNetworking();
 		setUpDisplay();
 		setUpOpenGL();
 		setUpResources();
@@ -101,48 +128,25 @@ public class Engine {
 		
 		//Movement X-axis
 		if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-			players.get(0).setDX(-0.35);
+			players.get(myID).setDX(-0.35);
 		} else if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-			players.get(0).setDX(0.35);
+			players.get(myID).setDX(0.35);
 		} else {
-			players.get(0).setDX(0);
+			players.get(myID).setDX(0);
 		}
-		if (Keyboard.isKeyDown(Keyboard.KEY_A)) {
-			players.get(1).setDX(-0.35);
-		} else if (Keyboard.isKeyDown(Keyboard.KEY_D)) {
-			players.get(1).setDX(0.35);
-		} else {
-			players.get(1).setDX(0);
-		}
-		//.
 		//Movement Y-axis
 		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
 			for(Wall wall : walls) {
-				//if (players.get(0).getDY()==0) {
-				if(players.get(0).onGround(wall) || players.get(0).onGround(players.get(1))) {
-					players.get(0).setDY(0.8);
+				//if (players.get(myID).getDY()==0) {
+				if(players.get(myID).onGround(wall)) {
+					players.get(myID).setDY(0.8);
 				}
 			}
 		} else if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
 			for(Wall wall : walls) {
-				//if (players.get(0).getDY()==0) {
-				if(players.get(0).onRoof(wall)) {
-					players.get(0).setDY(-0.8);
-				}
-			}
-		}
-		if (Keyboard.isKeyDown(Keyboard.KEY_W)) {
-			for(Wall wall : walls) {
-				//if (players.get(0).getDY()==0) {
-				if(players.get(1).onGround(wall) || players.get(0).onGround(players.get(1))) {
-					players.get(1).setDY(0.8);
-				}
-			}
-		} else if (Keyboard.isKeyDown(Keyboard.KEY_S)) {
-			for(Wall wall : walls) {
-				//if (players.get(0).getDY()==0) {
-				if(players.get(1).onRoof(wall)) {
-					players.get(1).setDY(-0.8);
+				//if (players.get(myID).getDY()==0) {
+				if(players.get(myID).onRoof(wall)) {
+					players.get(myID).setDY(-0.8);
 				}
 			}
 		}
@@ -150,9 +154,11 @@ public class Engine {
 		//Special keys
 		if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
 			if(shiftReady) {
-				gravplier = -gravplier;
+				SomeRequest request = new SomeRequest();
+				request.gravplier = -gravplier;
+				client.sendTCP(request);
 				shiftReady=false;
-				
+				gpCheck = false;
 			}
 		}
 		
@@ -165,15 +171,7 @@ public class Engine {
 			keyTimer=15;
 		}
 		if (Keyboard.isKeyDown(Keyboard.KEY_U)) {
-			List<Entity> entities = new ArrayList<Entity>();
-			for (int i=0;i<walls.size();i++) {
-				entities.add((Entity) walls.get(i));
-			}
-			try {
-				LevelLoader.writeFileAsBytes("test",entities);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+
 		}
 		
 	}
@@ -193,18 +191,28 @@ public class Engine {
 	}
 	
 	private void setUpSettings() {
-		//load default settings
+		//load serverdata from inputbox
+		server_ip=JOptionPane.showInputDialog(null,"Server IP:");
+		//server_port=JOptionPane.showInputDialog(null,"Server Port:  ");
+
+		//load default settings from file
 		try {
             //load a properties file
 			URL url = this.getClass().getResource("/config/defaultSettings");
 			FileInputStream propfile = new FileInputStream(url.getFile());	
 			Properties prop = new Properties();
     		prop.load(propfile);
+    		
             //get the property value and load it
+    		server_port1 = Integer.parseInt(prop.getProperty("server_port1"));
+    		server_port2 = Integer.parseInt(prop.getProperty("server_port2"));
     		levelpack = prop.getProperty("level_pack");
             level = Integer.parseInt(prop.getProperty("first_level"));
     		playerAmount = Integer.parseInt(prop.getProperty("amount_of_players"));
     		System.out.println("======== Loading game ========");
+    		System.out.println("Server IP:          " + server_ip);
+    		System.out.println("Server Port 1:      " + server_port1);
+    		System.out.println("Server Port 2:      " + server_port2);
     		System.out.println("Levelpack:          " + levelpack);
     		System.out.println("First level:        " + level);
     		System.out.println("Amount of players:  " + playerAmount);
@@ -212,6 +220,47 @@ public class Engine {
     	} catch (IOException ex) {
     		ex.printStackTrace();
         }
+	}
+	private void setUpNetworking() {
+		client = new Client();
+		
+		kryo = client.getKryo();
+		
+		Kryo kryo = client.getKryo();
+		kryo.register(SomeRequest.class);
+		kryo.register(posRequest.class);
+		kryo.register(posResponse.class);
+		kryo.register(LevelRequest.class);
+		kryo.register(LevelResponse.class);
+		
+		
+		client.start();
+		try {
+			client.connect(5000, server_ip, server_port1, server_port2);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		client.addListener(new Listener() {
+			   public void received (Connection connection, Object object) {
+			      if (object instanceof posResponse) {
+				        posResponse response = (posResponse)object;
+				        if(response.player_id!=myID) {
+					        players.get(response.player_id).setX(response.x);
+					        players.get(response.player_id).setY(response.y);
+					        if(gravplier!=response.gravplier) {
+					        	gravplier = response.gravplier;
+					        	gpCheck = true;
+					        }
+				        }
+				  }
+			   }
+			});
+
+		
+		myID = client.getID() - 1;
+		
+		
 	}
 	private void setUpDisplay() {
 		//initiate display
@@ -237,7 +286,7 @@ public class Engine {
 		for(int i=0;i<playerAmount;i++) {
 			textures.add(loadTexture("/sprites/char"+i+".png"));
 		}
-		tex_coin = loadTexture("coin.png");
+		//tex_coin = loadTexture("coin.png");
 		tex_arrow = loadTexture("arrow.png");
 		
 		
@@ -335,11 +384,15 @@ public class Engine {
 	}
 	private void logic(int delta) {
 		
+		
+		
 			//update player location and add gravity acceleration
+		
 		for (int i=0;i<playerAmount;i++) {
 			players.get(i).update(delta);	
 			players.get(i).setAY(GRAVITY*gravplier);
 		}
+
 		
 			//cooldown for cheatbutton
 		if(keyTimer>0) {
@@ -347,7 +400,7 @@ public class Engine {
 		}
 		
 			//activate shiftReady if player_0 lands on his feet. (or head if gravity is reversed)
-		if(!shiftReady) {
+		if((!shiftReady) && (gpCheck)) {
 			if(((gravplier==1) && (players.get(0).onFeet)) || ((gravplier==-1) && (!players.get(0).onFeet))) {
 				shiftReady = true;
 				System.out.println("Ready to shift gravity");
@@ -388,6 +441,11 @@ public class Engine {
 				}
 			}
 		}
+		posRequest request = new posRequest();
+		request.player_id = myID; 
+		request.x = players.get(myID).getX();
+		request.y = players.get(myID).getY();
+		client.sendTCP(request);
 	}
 
 
