@@ -8,9 +8,6 @@ import entities.Entity;
 import static org.lwjgl.opengl.GL11.*;
 
 public class Player extends AbstractGravityMoveableEntity {
-	
-	//player test
-
 	public boolean onFeet = true;
 	float red,green,blue;
 	
