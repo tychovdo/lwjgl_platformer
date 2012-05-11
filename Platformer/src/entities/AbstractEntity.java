@@ -6,8 +6,10 @@ public abstract class AbstractEntity implements Entity {
 
 	protected double x, y, width, height;
 	protected Rectangle hitbox = new Rectangle();
+	public int entity_type;
 	
 	public AbstractEntity(double x, double y, double width, double height) {
+		this.entity_type = 0;
 		this.x = x;
 		this.y = y;
 		this.width = width;
@@ -64,6 +66,10 @@ public abstract class AbstractEntity implements Entity {
 	public boolean intersects(Entity other) {
 		hitbox.setBounds((int) x, (int) y, (int) width, (int) height);
 		return hitbox.intersects(other.getX(), other.getY(), other.getWidth(), other.getHeight());
+	}
+	
+	public int getEntityType() {
+		return entity_type;
 	}
 
 }

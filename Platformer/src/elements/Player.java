@@ -22,7 +22,7 @@ public class Player extends AbstractGravityMoveableEntity {
 		green=0.5f+(random.nextFloat()/2);
 		blue=0.8f;
 		System.out.println("Color: "+red+","+green+","+blue);
-		
+		entity_type = 10;
 	}
 	
 	

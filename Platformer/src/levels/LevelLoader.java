@@ -9,47 +9,31 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import elements.LevelSwitcher;
 import elements.Wall;
+import entities.Entity;
 
 public class LevelLoader {
 
 	
-	public static List<Wall> load(String levelpack, int level) {
-		List<Wall> adder = new ArrayList<Wall>();
+	public static List<Entity> load(String levelpack, int level, int entity_type) {
 		
+		//load all entities from 'level' in 'levelpack'
+		List<Entity> adder = new ArrayList<Entity>();
 		adder = ReadFileAsBytes(levelpack + "/" + level + ".lvl");
-//		int dws = 20;
-//		
-//		switch(level) {
-//		case 3:
-//			adder.add(new Wall(100,100,100,dws));
-//			adder.add(new Wall(300,200,100,dws));
-//			adder.add(new Wall(100,300,100,dws));
-//			break;
-//		case 4:
-//			adder.add(new Wall(100,100,700,dws));
-//			adder.add(new Wall(100,100,dws,400));
-//			adder.add(new Wall(100,500,600,dws));
-//			adder.add(new Wall(700,200,dws,300+dws));
-//			adder.add(new Wall(200,200,500,dws));
-//			adder.add(new Wall(200,200,dws,200));
-//			adder.add(new Wall(200,400,400,dws));
-//			adder.add(new Wall(600,300,dws,100+dws));
-//			adder.add(new Wall(300,300,300,dws));
-//			break;
-//		case 5:
-//			adder.add(new Wall(100,100,dws,400));
-//			adder.add(new Wall(200,200,500,dws));
-//			adder.add(new Wall(600,300,dws,100+dws));
-//
-//			break;
-//		
-//		}
 		
-		return adder;
+		//filter and return entities which correspond with 'entity_type'
+		List<Entity> filteredAdder = new ArrayList<Entity>();
+		for(Entity entity : adder) {
+			if(entity.getEntityType()==entity_type) {
+				filteredAdder.add(entity);
+			}
+		}
+		return filteredAdder;
 	}
 	
-	public static void writeFileAsBytes(String fullPath, List<Wall> walls) throws IOException
+	public static void writeFileAsBytes(String fullPath, List<Entity> entities) throws IOException
 	{
 	    File file = new File(fullPath);
 
@@ -61,12 +45,24 @@ public class LevelLoader {
 	      DataOutputStream data_out = new DataOutputStream (file_output);
 
 	      // Write the data to the file in an integer/double pair
-	      for (int i=0; i < walls.size(); i++) {
-	    	  Wall wall = walls.get(i);
-	          data_out.writeInt ((int) wall.getX());
-	          data_out.writeInt ((int) wall.getY());
-	          data_out.writeInt ((int) wall.getWidth());
-	          data_out.writeInt ((int) wall.getHeight());
+	      for (int i=0; i < entities.size(); i++) {
+	    	  Entity entity = entities.get(i);
+	    	  data_out.writeInt ((int) entity.getEntityType());
+	    	  switch(entity.getEntityType()) {
+	    	  case 1:
+		          data_out.writeInt ((int) entity.getX());
+		          data_out.writeInt ((int) entity.getY());
+		          data_out.writeInt ((int) entity.getWidth());
+		          data_out.writeInt ((int) entity.getHeight());
+		          break;
+	    	  case 2:
+		          data_out.writeInt ((int) entity.getX());
+		          data_out.writeInt ((int) entity.getY());
+		          data_out.writeInt ((int) ((LevelSwitcher) entity).getNextLevel());
+		          data_out.writeInt ((int) 10);
+		          break;
+	    	  }
+
 	      }
 	      // Close file when finished with it..
 	      file_output.close ();
@@ -76,42 +72,75 @@ public class LevelLoader {
 	    }
 	}
 	
-	public static List<Wall> ReadFileAsBytes(String fullPath) {
-		List<Wall> walls = new ArrayList<Wall>(16);
+	public static List<Entity> ReadFileAsBytes(String fullPath) {
+		List<Entity> entities = new ArrayList<Entity>();
 		
 		File file = new File(fullPath);
 	    int i_data = 0;
 	    int count = 0;
-	    int[] data = new int[4];
+	    int[] data = new int[5];
+	    
 	    
 	    
 	    try {
 	      // Wrap the FileInputStream with a DataInputStream
-	      FileInputStream file_input = new FileInputStream (file);
-	      DataInputStream data_in    = new DataInputStream (file_input );
+	    FileInputStream file_input = new FileInputStream (file);
+	    DataInputStream data_in    = new DataInputStream (file_input );
 
-	      while (true) {
-	        try {
-	          i_data = data_in.readInt ();
-	          data[count] = i_data;
-	          if(count<3) {
-	        	  count++;
-	          } else {
-	        	  walls.add(new Wall(data[0],data[1],data[2],data[3]));
-	        	  count=0;
-	          }
-	        }
-	        catch (EOFException eof) {
-	          //System.out.println ("End of File");
-	          break;
-	        }
-	        //System.out.printf ("%3d, ", i_data);
-	      }
-	      data_in.close ();
+		while (true) {
+			try {
+				i_data = data_in.readInt ();
+				data[count] = i_data;
+				if(count<4) {
+					count++;
+				} else {
+					switch(data[0]) {
+					case 1: //walls
+						entities.add(new Wall(data[1],data[2],data[3],data[4]));
+						break;
+					case 2:
+						entities.add(new LevelSwitcher(data[1],data[2],data[3]));
+						break;
+					}
+					count=0;
+				}
+			}
+			catch (EOFException eof) {
+				//System.out.println ("End of File");
+				break;
+			}
+		}
+	        //System.out.printf ("%3d, ", i_data);	      data_in.close ();
 	    } catch  (IOException e) {
 	       System.out.println ( "IO Exception =: " + e );
 	    }
 	    
-		return walls;
+		return entities;
 	}
+	
+	public static List<Entity> loadHardcodedlevel(int level) {
+		List<Entity> entities = new ArrayList<Entity>();
+		switch(level) {
+		case 1:
+			entities.add(new Wall(100,100,100,20));
+			entities.add(new Wall(300,300,100,20));
+			entities.add(new LevelSwitcher(500,400,2));
+			break;
+		case 2:
+			entities.add(new Wall(100,100,20,200));
+			entities.add(new Wall(300,300,20,200));
+			entities.add(new LevelSwitcher(500,100,0));
+			break;
+			
+		case 3:
+			entities.add(new Wall(100,100,200,20));
+			entities.add(new Wall(300,300,200,20));
+			entities.add(new LevelSwitcher(300,400,1));
+			break;
+		}
+
+
+		return entities;
+	}
+	
 }

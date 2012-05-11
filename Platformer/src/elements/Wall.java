@@ -4,9 +4,10 @@ import static org.lwjgl.opengl.GL11.glRectd;
 import entities.AbstractEntity;
 
 public class Wall extends AbstractEntity {
-
+	
 	public Wall(double x, double y, double width, double height) {
 		super(x, y, width, height);
+		entity_type = 1;
 	}
 	
 	@Override

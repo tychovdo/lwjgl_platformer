@@ -14,6 +14,7 @@ public interface Entity {
 	public double getHeight();
 	public double getWidth();
 	public boolean intersects(Entity other);
+	public int getEntityType();
 }
 
 // MoveableEntity.java

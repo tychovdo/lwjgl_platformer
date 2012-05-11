@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import levels.LevelLoader;
@@ -16,8 +17,10 @@ import org.lwjgl.opengl.*;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
+import elements.LevelSwitcher;
 import elements.Player;
 import elements.Wall;
+import entities.Entity;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -42,16 +45,26 @@ public class Engine {
 	private int levelPreviousFrame = 1337;
 	
 
+	private Texture tex_coin;
+	private Texture tex_arrow;
 	
 	private List<Texture> textures = new ArrayList<Texture>();
 	private List<Player> players = new ArrayList<Player>();
 	private List<Wall> walls = new ArrayList<Wall>();
+	private List<LevelSwitcher> levelswitchers = new ArrayList<LevelSwitcher>();
 
 	
 
 	
 	public Engine() {
-
+		try {
+			LevelLoader.writeFileAsBytes("levelpack0/1.lvl", LevelLoader.loadHardcodedlevel(1));
+			LevelLoader.writeFileAsBytes("levelpack0/2.lvl", LevelLoader.loadHardcodedlevel(2));
+			LevelLoader.writeFileAsBytes("levelpack0/3.lvl", LevelLoader.loadHardcodedlevel(3));
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		init();
 		while (gameloop) {
 
@@ -151,6 +164,17 @@ public class Engine {
 			level++;
 			keyTimer=15;
 		}
+		if (Keyboard.isKeyDown(Keyboard.KEY_U)) {
+			List<Entity> entities = new ArrayList<Entity>();
+			for (int i=0;i<walls.size();i++) {
+				entities.add((Entity) walls.get(i));
+			}
+			try {
+				LevelLoader.writeFileAsBytes("test",entities);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		
 	}
 
@@ -213,7 +237,9 @@ public class Engine {
 		for(int i=0;i<playerAmount;i++) {
 			textures.add(loadTexture("/sprites/char"+i+".png"));
 		}
-		textures.add(loadTexture("/sprites/player_grey.png"));
+		tex_coin = loadTexture("coin.png");
+		tex_arrow = loadTexture("arrow.png");
+		
 		
 	}
 	private void setUpEntities() {
@@ -223,6 +249,7 @@ public class Engine {
 		for(int i=0;i<playerAmount;i++) {
 			players.add(new Player(i*100+100,100,32,32));	
 		}
+
 	}
     
 	private Texture loadTexture(String filename) {
@@ -262,27 +289,37 @@ public class Engine {
 		
 			//draw players
 		for(int i=0;i<playerAmount;i++) {
-			//glColor3d(players.get(i).color.getRed(), players.get(i).color.getGreen(), players.get(i).color.getBlue());
 			players.get(i).draw(textures.get(i),getStep(50, 5),gravplier);	
+		}
+			//draw levelswitchers
+		for (LevelSwitcher ls : levelswitchers) {
+			ls.draw(tex_arrow);
 		}
 
 //test
 		
 	}
+	@SuppressWarnings("unchecked")
 	private void loadLevel() {
 		if(levelPreviousFrame!=level) {
 			walls.clear();
 			int dws = 20; //default wall size
-			//borders
+			
+				//borders
 			walls.add(new Wall(0,0,WIDTH,dws)); //floor
 			walls.add(new Wall(0,0,dws,HEIGHT)); //left wall
 			walls.add(new Wall(WIDTH-dws,0,dws,HEIGHT)); //right wal
 			walls.add(new Wall(0,HEIGHT-dws,WIDTH, dws)); //roof
 			
-			//platforms
-			walls.addAll(LevelLoader.load(levelpack, level));
+				//platforms
+			walls.addAll((Collection<? extends Wall>) LevelLoader.load(levelpack, level, 1));
+			
+			
+				//bonusses
+			levelswitchers.clear();
+			levelswitchers.addAll((Collection<? extends LevelSwitcher>) LevelLoader.load("levelpack0",level,2));
+			
 			levelPreviousFrame=level;
-			//}
 		}
 		
 	}
@@ -316,32 +353,38 @@ public class Engine {
 				System.out.println("Ready to shift gravity");
 			}
 		}
-			//collision detection (players ==> walls)
-		for(int i=0;i<playerAmount;i++) {
-			for (Wall wall : walls) {	
-				while(players.get(i).intersect_dir(wall)!=0) {
-					switch(players.get(i).intersect_dir(wall)) {
+			//collision detection 
+		for(Player player : players) {
+			for (Wall wall : walls) { //collision (players ==> walls)	
+				while(player.intersect_dir(wall)!=0) {
+					switch(player.intersect_dir(wall)) {
 						case 1:
-							players.get(i).setDX(0);
-							players.get(i).setAX(0);
-							players.get(i).setX(players.get(i).getX()+1);
+							player.setDX(0);
+							player.setAX(0);
+							player.setX(player.getX()+1);
 						break;
 						case 2:
-							players.get(i).setDY(0);
-							players.get(i).setAY(0);
-							players.get(i).setY(players.get(i).getY()-1);
+							player.setDY(0);
+							player.setAY(0);
+							player.setY(player.getY()-1);
 						break;
 						case 3:
-							players.get(i).setDX(0);
-							players.get(i).setAX(0);
-							players.get(i).setX(players.get(i).getX()-1);
+							player.setDX(0);
+							player.setAX(0);
+							player.setX(player.getX()-1);
 						break;
 						case 4:
-							players.get(i).setDY(0);
-							players.get(i).setAY(0);
-							players.get(i).setY(players.get(i).getY()+1);
+							player.setDY(0);
+							player.setAY(0);
+							player.setY(player.getY()+1);
 						break;
 					}
+				}
+			}
+			for (LevelSwitcher ls : levelswitchers) {
+				if(player.intersects(ls)) {
+					level = ls.getNextLevel();
+					System.out.println("Next level: " + ls.getNextLevel());
 				}
 			}
 		}
