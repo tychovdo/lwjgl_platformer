@@ -4,18 +4,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
+//import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
+//import java.util.Properties;
 
 import javax.swing.JOptionPane;
 
 import levels.LevelLoader;
 
+
 import network.LevelRequest;
-import network.LevelResponse;
+import network.LoginRequest;
 import network.SomeRequest;
 import network.posRequest;
 import network.posResponse;
@@ -25,6 +26,8 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.*;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
+
+import server.ServerEngine;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
@@ -50,6 +53,10 @@ public class Engine {
 	public String levelpack;
 	public int level;
 	public int playerAmount;
+	public boolean locked;
+	
+	public boolean singleplayer = false;
+	public ServerEngine singleplayerServer;
 	
 	public int myID;
 	
@@ -66,7 +73,9 @@ public class Engine {
 	
 
 	//private Texture tex_coin;
+	private Texture tex_lock;
 	private Texture tex_arrow;
+
 	
 	private List<Texture> textures = new ArrayList<Texture>();
 	private List<Player> players = new ArrayList<Player>();
@@ -75,6 +84,8 @@ public class Engine {
 
 	Client client;
 	Kryo kryo;
+	//private boolean locked;
+
 	
 	public Engine() {
 		
@@ -109,6 +120,7 @@ public class Engine {
 			}
 		}
 		Display.destroy();
+		System.exit(0);
 	}
 	
 
@@ -117,10 +129,11 @@ public class Engine {
 		
 		setUpSettings();
 		setUpNetworking();
+		setUpEntities();	
 		setUpDisplay();
 		setUpOpenGL();
 		setUpResources();
-		setUpEntities();
+
 		setUpTimer();
 	}
 	
@@ -196,19 +209,32 @@ public class Engine {
 		//server_port=JOptionPane.showInputDialog(null,"Server Port:  ");
 
 		//load default settings from file
-		try {
-            //load a properties file
-			URL url = this.getClass().getResource("/config/defaultSettings");
-			FileInputStream propfile = new FileInputStream(url.getFile());	
-			Properties prop = new Properties();
-    		prop.load(propfile);
+//		try {
+//            //load a properties file
+////			URL url = this.getClass().getResource("/config/defaultSettings");
+////			FileInputStream propfile = new FileInputStream(url.getFile());	
+//			Properties prop = new Properties();
+//			prop.load(new FileInputStream("config/defaultSet2tings"));
+//    		
+//            //get the property value and load it
+//    		server_port1 = Integer.parseInt(prop.getProperty("server_port1"));
+//    		server_port2 = Integer.parseInt(prop.getProperty("server_port2"));
+//    		levelpack = prop.getProperty("level_pack");
+//            level = Integer.parseInt(prop.getProperty("first_level"));
+//    		playerAmount = Integer.parseInt(prop.getProperty("amount_of_players"));
+//    		
+			server_port1 = 54555;
+			server_port2 = 54777;
+			levelpack = "levelpack0";
+			level = 3;
+			playerAmount = 8;
+			
+    		if(server_ip.equals("singleplayer")) {
+    			singleplayer = true;
+    			server_ip = "localhost";
+    			
+    		}
     		
-            //get the property value and load it
-    		server_port1 = Integer.parseInt(prop.getProperty("server_port1"));
-    		server_port2 = Integer.parseInt(prop.getProperty("server_port2"));
-    		levelpack = prop.getProperty("level_pack");
-            level = Integer.parseInt(prop.getProperty("first_level"));
-    		playerAmount = Integer.parseInt(prop.getProperty("amount_of_players"));
     		System.out.println("======== Loading game ========");
     		System.out.println("Server IP:          " + server_ip);
     		System.out.println("Server Port 1:      " + server_port1);
@@ -217,22 +243,25 @@ public class Engine {
     		System.out.println("First level:        " + level);
     		System.out.println("Amount of players:  " + playerAmount);
     		
-    	} catch (IOException ex) {
-    		ex.printStackTrace();
-        }
+//    	} catch (IOException ex) {
+//    		ex.printStackTrace();
+//        }
 	}
 	private void setUpNetworking() {
+		if(singleplayer) {
+			singleplayerServer = new ServerEngine();
+		}
+		
 		client = new Client();
 		
 		kryo = client.getKryo();
 		
 		Kryo kryo = client.getKryo();
 		kryo.register(SomeRequest.class);
+		kryo.register(LoginRequest.class);
 		kryo.register(posRequest.class);
 		kryo.register(posResponse.class);
 		kryo.register(LevelRequest.class);
-		kryo.register(LevelResponse.class);
-		
 		
 		client.start();
 		try {
@@ -242,24 +271,38 @@ public class Engine {
 		}
 		
 		client.addListener(new Listener() {
-			   public void received (Connection connection, Object object) {
+
+			public void received (Connection connection, Object object) {
 			      if (object instanceof posResponse) {
 				        posResponse response = (posResponse)object;
-				        if(response.player_id!=myID) {
+				        
+				        if(response.player_id!=myID || response.forced) {
 					        players.get(response.player_id).setX(response.x);
-					        players.get(response.player_id).setY(response.y);
-					        if(gravplier!=response.gravplier) {
-					        	gravplier = response.gravplier;
-					        	gpCheck = true;
+					        players.get(response.player_id).setY(response.y);  
+					        players.get(response.player_id).exists = response.exists;
+					        if(response.exists==false) {
+					        	System.out.println(response.player_id + "left.");
 					        }
+				        }
+				        level = response.level;
+				        locked = response.locked;
+				        
+				        if(gravplier!=response.gravplier) {
+				        	gravplier = response.gravplier;
+				        	gpCheck = true;
 				        }
 				  }
 			   }
 			});
+		
 
 		
 		myID = client.getID() - 1;
-		
+
+		LoginRequest request = new LoginRequest();
+		request.player_id = myID;
+		request.name = "Player";
+		client.sendTCP(request);
 		
 	}
 	private void setUpDisplay() {
@@ -287,6 +330,7 @@ public class Engine {
 			textures.add(loadTexture("/sprites/char"+i+".png"));
 		}
 		//tex_coin = loadTexture("coin.png");
+		tex_lock = loadTexture("lock.png");
 		tex_arrow = loadTexture("arrow.png");
 		
 		
@@ -296,8 +340,11 @@ public class Engine {
 		
 			//load players
 		for(int i=0;i<playerAmount;i++) {
-			players.add(new Player(i*100+100,100,32,32));	
+			players.add(new Player(0,0,32,32));	
 		}
+		players.get(myID).setX(150);
+		players.get(myID).setY(150);
+		
 
 	}
     
@@ -337,15 +384,19 @@ public class Engine {
 		glEnable(GL_TEXTURE_2D);
 		
 			//draw players
-		for(int i=0;i<playerAmount;i++) {
-			players.get(i).draw(textures.get(i),getStep(50, 5),gravplier);	
+		for(int i=0;i<players.size();i++) {
+			if(players.get(i).exists) {
+				players.get(i).draw(textures.get(i),getStep(50, 5),gravplier);	
+			}
 		}
 			//draw levelswitchers
 		for (LevelSwitcher ls : levelswitchers) {
-			ls.draw(tex_arrow);
+			if(locked) {
+				ls.draw(tex_lock);
+			} else {
+				ls.draw(tex_arrow);
+			}
 		}
-
-//test
 		
 	}
 	@SuppressWarnings("unchecked")
@@ -388,7 +439,7 @@ public class Engine {
 		
 			//update player location and add gravity acceleration
 		
-		for (int i=0;i<playerAmount;i++) {
+		for (int i=0;i<players.size();i++) {
 			players.get(i).update(delta);	
 			players.get(i).setAY(GRAVITY*gravplier);
 		}
@@ -434,13 +485,16 @@ public class Engine {
 					}
 				}
 			}
-			for (LevelSwitcher ls : levelswitchers) {
-				if(player.intersects(ls)) {
-					level = ls.getNextLevel();
-					System.out.println("Next level: " + ls.getNextLevel());
-				}
+		}
+		for (LevelSwitcher ls : levelswitchers) {
+			if(players.get(myID).intersects(ls)) {
+				LevelRequest request = new LevelRequest();
+				request.player_id = myID; 
+				request.nextLevel =  ls.getNextLevel();
+				client.sendTCP(request);
 			}
 		}
+		
 		posRequest request = new posRequest();
 		request.player_id = myID; 
 		request.x = players.get(myID).getX();

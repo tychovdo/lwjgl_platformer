@@ -1,7 +1,6 @@
 package network;
 
-
-
 public class LevelRequest {
-   public int level;
+	public int player_id;
+	public int nextLevel;
 }

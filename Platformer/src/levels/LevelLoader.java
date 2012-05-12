@@ -21,7 +21,8 @@ public class LevelLoader {
 		
 		//load all entities from 'level' in 'levelpack'
 		List<Entity> adder = new ArrayList<Entity>();
-		adder = ReadFileAsBytes(levelpack + "/" + level + ".lvl");
+		adder = loadHardcodedlevel(level);
+		//adder = ReadFileAsBytes(levelpack + "/" + level + ".lvl");
 		
 		//filter and return entities which correspond with 'entity_type'
 		List<Entity> filteredAdder = new ArrayList<Entity>();
@@ -129,13 +130,27 @@ public class LevelLoader {
 		case 2:
 			entities.add(new Wall(100,100,20,200));
 			entities.add(new Wall(300,300,20,200));
-			entities.add(new LevelSwitcher(500,100,0));
+			entities.add(new LevelSwitcher(500,100,4));
 			break;
 			
 		case 3:
 			entities.add(new Wall(100,100,200,20));
 			entities.add(new Wall(300,300,200,20));
 			entities.add(new LevelSwitcher(300,400,1));
+			break;
+		case 4:
+			entities.add(new Wall(260,20,40,440));
+			entities.add(new Wall(480,120,40,460));
+			entities.add(new Wall(230,460,100,40));
+			entities.add(new Wall(450,100,100,40));
+			
+			entities.add(new Wall(700,160,150,20));
+			entities.add(new Wall(500,300,75,80));
+			entities.add(new Wall(575,300,75,20));
+			entities.add(new Wall(600,430,300,20));
+			
+			entities.add(new LevelSwitcher(700,450,3));
+			
 			break;
 		}
 

@@ -10,7 +10,11 @@ import static org.lwjgl.opengl.GL11.*;
 public class Player extends AbstractGravityMoveableEntity {
 	public boolean onFeet = true;
 	float red,green,blue;
+	public String name;
 	
+	//n:
+	public boolean exists = true;
+	public boolean reachedExit = false;
 	
 	public Player(double x, double y, double width, double height) {
 		super(x, y, width, height);
