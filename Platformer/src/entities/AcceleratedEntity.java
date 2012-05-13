@@ -1,6 +1,6 @@
 package entities;
 
-public interface GravityMoveableEntity extends MoveableEntity {
+public interface AcceleratedEntity extends MoveableEntity {
 	public double getAX();
 	public double getAY();
 	public void setAX(double ax);

@@ -4,8 +4,10 @@ import java.awt.Rectangle;
 
 public abstract class AbstractMoveableEntity extends AbstractEntity implements MoveableEntity {
 
-	protected double dx ,dy;
+	// AbstractMovableEntity:
+	// Movable Entity
 	
+	protected double dx ,dy;
 	
 	protected Rectangle hitbox_left = new Rectangle();
 	protected Rectangle hitbox_top = new Rectangle();

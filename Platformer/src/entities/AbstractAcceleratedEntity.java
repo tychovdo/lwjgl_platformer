@@ -1,13 +1,15 @@
 package entities;
 
-public abstract class AbstractGravityMoveableEntity extends
-		AbstractMoveableEntity implements GravityMoveableEntity {
+public abstract class AbstractAcceleratedEntity extends
+		AbstractMoveableEntity implements AcceleratedEntity {
 
+	// AbstractAcceleratedEntity:
+	// Accelerating movable entity
 	
 	protected double ax, ay;
 	protected double max_dy;
 	
-	public AbstractGravityMoveableEntity(double x, double y, double width, double height) {
+	public AbstractAcceleratedEntity(double x, double y, double width, double height) {
 		super(x, y, width, height);
 	}
 

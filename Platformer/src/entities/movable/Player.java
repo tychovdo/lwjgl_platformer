@@ -1,13 +1,19 @@
-package elements;
+package entities.movable;
+import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.glBegin;
+import static org.lwjgl.opengl.GL11.glColor3d;
+import static org.lwjgl.opengl.GL11.glEnd;
+import static org.lwjgl.opengl.GL11.glTexCoord2f;
+import static org.lwjgl.opengl.GL11.glVertex2i;
+
 import java.util.Random;
 
 import org.newdawn.slick.opengl.Texture;
 
-import entities.AbstractGravityMoveableEntity;
+import entities.AbstractAcceleratedEntity;
 import entities.Entity;
-import static org.lwjgl.opengl.GL11.*;
 
-public class Player extends AbstractGravityMoveableEntity {
+public class Player extends AbstractAcceleratedEntity {
 	public boolean onFeet = true;
 	float red,green,blue;
 	public String name;
@@ -25,7 +31,6 @@ public class Player extends AbstractGravityMoveableEntity {
 		red=0.5f+(random.nextFloat()/2);
 		green=0.5f+(random.nextFloat()/2);
 		blue=0.8f;
-		System.out.println("Color: "+red+","+green+","+blue);
 		entity_type = 10;
 	}
 	

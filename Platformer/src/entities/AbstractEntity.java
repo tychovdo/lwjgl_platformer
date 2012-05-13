@@ -4,10 +4,16 @@ import java.awt.Rectangle;
 
 public abstract class AbstractEntity implements Entity {
 
+	// AbstractEntity:
+	// Non-movable rectangular entity
+	
 	protected double x, y, width, height;
 	protected Rectangle hitbox = new Rectangle();
 	public int entity_type;
 	
+	public AbstractEntity() {
+		
+	}
 	public AbstractEntity(double x, double y, double width, double height) {
 		this.entity_type = 0;
 		this.x = x;

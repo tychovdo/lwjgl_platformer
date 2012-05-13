@@ -1,4 +1,4 @@
-package elements;
+package entities.roomobjects;
 
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 import static org.lwjgl.opengl.GL11.glBegin;
@@ -14,12 +14,15 @@ import entities.AbstractEntity;
 public class LevelSwitcher extends AbstractEntity {
 	protected int nextLevel;
 	
+	public LevelSwitcher() {
+		
+	}
 	public LevelSwitcher(double x, double y, int nextLevel) {
 		super(x, y, 32, 32);
 		this.nextLevel = nextLevel;
 		
 		entity_type = 2;
-		System.out.println("Created @ "+x+","+y);
+		//System.out.println("Created @ "+x+","+y);
 	}
 	
 	
@@ -34,9 +37,6 @@ public class LevelSwitcher extends AbstractEntity {
 	        glVertex2i((int) (x+width), (int) y); // Upper-right
 	        glTexCoord2f(0, 1);
 	        glVertex2i((int) x, (int) y); // Upper-left
-
-
-
 	    glEnd();
 	}
 	@Override
