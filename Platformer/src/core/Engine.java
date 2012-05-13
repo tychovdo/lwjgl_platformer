@@ -26,6 +26,7 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import loaders.KryoLoader;
+import loaders.SystemInfo;
 import network.ServerEngine;
 import network.packages.GeneralToClient;
 import network.packages.GeneralToServer;
@@ -35,10 +36,10 @@ import network.packages.LoginToServer;
 import network.packages.PosToServer;
 
 import org.lwjgl.LWJGLException;
-import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
+import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
@@ -50,6 +51,7 @@ import com.esotericsoftware.kryonet.Listener;
 
 import entities.movable.Player;
 import entities.roomobjects.LevelSwitcher;
+import entities.roomobjects.Spike;
 import entities.roomobjects.Wall;
 
 public class Engine {
@@ -69,10 +71,10 @@ public class Engine {
 	private String levelpack;   
 	private int level;
 	private int maxPlayers;   
-	private int levelPreviousFrame = 1337;  //when 'level!=levelPreviousFrame' a new level is asked from server
+	private int levelPreviousFrame = 1337;      //when 'level!=levelPreviousFrame' a new level is asked from server
 	private int myID;           				//the player_id from the player on this client
 	private boolean locked;     				//when 'locked=false' only 1 more player is needed to go to next level
-	private int gravplier = 1; 				;//gravity multiplier (gravplier=-1 on reversed gravity)
+	private int gravplier = 1; 				;   //gravity multiplier (gravplier=-1 on reversed gravity)
 	
 
 	// input:
@@ -80,20 +82,23 @@ public class Engine {
 	private int keyTimer = 0;               //a timer to handle keystrokes per second
 	
 	// fps settings:
+	SystemInfo sysInfo = new SystemInfo();
 	private boolean gameloop = true;
-	private long startTime; 
-	private long lastFrame;
+
 	
 	// Game objects:
 		// resources:
 	private Texture tex_lock;
 	private Texture tex_arrow;
+	private Texture[] tex_mine = new Texture[2];
+	
 		// private Texture tex_coin;
 	private List<Texture> textures = new ArrayList<Texture>();
 		// objects:
 	private List<Player> players = new ArrayList<Player>();
 	private List<Wall> walls = new ArrayList<Wall>();
 	private List<LevelSwitcher> levelswitchers = new ArrayList<LevelSwitcher>();
+	private List<Spike> spikes = new ArrayList<Spike>();
 	
 		// networking:
 	ServerEngine singleplayerServer;
@@ -119,7 +124,7 @@ public class Engine {
 			
 			input();	
 			syncLevel();
-			logic(getDelta());
+			logic(sysInfo.getDelta());
 			
 			render();		
 			
@@ -147,71 +152,61 @@ public class Engine {
 	}
 	
 	private void input() { //TODO: external control settings, dynamic player amount
-		
-		// Movement X-axis
-		if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-			players.get(myID).setDX(-0.35);
-		} else if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-			players.get(myID).setDX(0.35);
-		} else {
-			players.get(myID).setDX(0);
-		}
-		// Movement Y-axis
-		if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-			for(Wall wall : walls) {
-				//if (players.get(myID).getDY()==0) {
-				if(players.get(myID).onGround(wall)) {
-					players.get(myID).setDY(0.8);
+		if(!players.get(myID).dead) {
+			
+			// Movement X-axis
+			if (Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
+				players.get(myID).setDX(-0.35);
+			} else if (Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
+				players.get(myID).setDX(0.35);
+			} else {
+				players.get(myID).setDX(0);
+			}
+			// Movement Y-axis
+			if (Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+				for(Wall wall : walls) {
+					//if (players.get(myID).getDY()==0) {
+					if(players.get(myID).onGround(wall)) {
+						players.get(myID).setDY(0.8);
+					}
+				}
+			} else if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
+				for(Wall wall : walls) {
+					//if (players.get(myID).getDY()==0) {
+					if(players.get(myID).onRoof(wall)) {
+						players.get(myID).setDY(-0.8);
+					}
 				}
 			}
-		} else if (Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-			for(Wall wall : walls) {
-				//if (players.get(myID).getDY()==0) {
-				if(players.get(myID).onRoof(wall)) {
-					players.get(myID).setDY(-0.8);
+			
+			// Special keys
+			if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
+				if(shiftReady) {
+					GeneralToServer request = new GeneralToServer();
+					request.gravplier = -gravplier;
+					request.gotHit = false;
+					client.sendTCP(request);
+					shiftReady=false;
+					gpCheck = false;
 				}
 			}
-		}
-		
-		// Special keys
-		if (Keyboard.isKeyDown(Keyboard.KEY_SPACE)) {
-			if(shiftReady) {
-				GeneralToServer request = new GeneralToServer();
-				request.gravplier = -gravplier;
-				client.sendTCP(request);
-				shiftReady=false;
-				gpCheck = false;
+			
+			// Cheats:
+			if (Keyboard.isKeyDown(Keyboard.KEY_O)&&keyTimer<1) {
+				level--;
+				keyTimer=15;
+			} else if (Keyboard.isKeyDown(Keyboard.KEY_P)&&keyTimer<1) {
+				level++;
+				keyTimer=15;
 			}
-		}
-		
-		// Cheats:
-		if (Keyboard.isKeyDown(Keyboard.KEY_O)&&keyTimer<1) {
-			level--;
-			keyTimer=15;
-		} else if (Keyboard.isKeyDown(Keyboard.KEY_P)&&keyTimer<1) {
-			level++;
-			keyTimer=15;
-		}
-		if (Keyboard.isKeyDown(Keyboard.KEY_U)) {
-
-		}
-		
-	}
-
-
-	private long getTime() {
-		return (Sys.getTime() * 1000) / Sys.getTimerResolution();
-	}
-	private int getDelta() {
-		long currentTime = getTime();
-		int delta = (int) (currentTime - lastFrame);
-		lastFrame = getTime();
-		return delta;
-	}
-	private void setUpStartTime() {
-		startTime = getTime();
-	}
+			if (Keyboard.isKeyDown(Keyboard.KEY_U)) {
 	
+			}
+		}
+		
+	}
+
+
 	private void setUpSettings() {
 		// load serverdata from inputbox
 		server_ip=JOptionPane.showInputDialog(null,"Server IP:");
@@ -272,6 +267,13 @@ public class Engine {
 						players.get(response.player_id).setX(response.x);
 						players.get(response.player_id).setY(response.y);  
 						players.get(response.player_id).exists = response.exists;
+						if(players.get(response.player_id).dead != response.dead) {
+							players.get(response.player_id).dead = response.dead;
+							players.get(response.player_id).setDX(0);
+							players.get(response.player_id).setDY(0);
+							players.get(response.player_id).setAX(0);
+							players.get(response.player_id).setAY(0);
+						}
 						if(response.exists==false) {
 							System.out.println(response.player_id + "left.");
 						}
@@ -289,7 +291,8 @@ public class Engine {
 					// sends current level data: 'walls' and 'levelswitchers' ('spawn' is only serverside)
 					LevelToClient response = (LevelToClient)object;
 					walls = response.walls;
-					levelswitchers = response.levelswitchers;  	  
+					levelswitchers = response.levelswitchers;  
+					spikes = response.spikes;
 				}
 			}
 		});
@@ -322,6 +325,8 @@ public class Engine {
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glViewport(0, 0, WIDTH, HEIGHT);	
+		glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 	}
 	private void setUpResources() {
 		// load character textures
@@ -334,7 +339,8 @@ public class Engine {
 		tex_lock = loadTexture("lock.png");
 		tex_arrow = loadTexture("arrow.png");
 		
-		
+		tex_mine[0] = loadTexture("Mine1.png");
+		tex_mine[1] = loadTexture("Mine2.png");
 	}
 	private void setUpEntities() {
 		for(int i=0;i<maxPlayers;i++) {
@@ -343,11 +349,16 @@ public class Engine {
 		players.get(myID).setX(150);
 		players.get(myID).setY(150);
 	}
+	private void setUpStartTime() {
+		sysInfo.startTime = SystemInfo.getTime();
+	}
     
 	private Texture loadTexture(String filename) {
     	//return texture, in res/ folder, from filename
         try {
-                return TextureLoader.getTexture("PNG", new FileInputStream(new File("res/" + filename)));
+        	//return TextureLoader.getTexture("PNG", new FileInputStream(new File("res/" + filename)));
+        	//texture = InternalTextureLoader.get().getTexture(data, filter == FILTER_LINEAR ? SGL.GL_LINEAR : SGL.GL_NEAREST);
+        	return TextureLoader.getTexture("PNG", new FileInputStream(new File("res/" + filename)), GL11.GL_NEAREST);
         } catch (FileNotFoundException e) {
                 e.printStackTrace();
         } catch (IOException e) {
@@ -356,7 +367,7 @@ public class Engine {
         return null;
     }
 
-	private void render() {
+	private void render() { //TODO: enable 2d in class instead of in render()
 		// clear screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glMatrixMode(GL_MODELVIEW);
@@ -374,13 +385,14 @@ public class Engine {
 			wall.draw();
 		}
 
+
 		// draw Textured entities:
 		glEnable(GL_TEXTURE_2D);
 		
 			// draw players
 		for(int i=0;i<players.size();i++) {
 			if(players.get(i).exists) {
-				players.get(i).draw(textures.get(i),getStep(50, 5),gravplier);	
+				players.get(i).draw(textures.get(i),sysInfo.getStep(50, 5),gravplier);
 			}
 		}
 			// draw levelswitchers
@@ -390,6 +402,11 @@ public class Engine {
 			} else {
 				ls.draw(tex_arrow);
 			}
+		}
+		
+		for (Spike spike : spikes) {
+			//spike.draw(tex_mine[getStep(300,2)]);
+			spike.draw(tex_mine[0]);
 		}
 		
 	}
@@ -407,18 +424,7 @@ public class Engine {
 		
 	}
 	
-	private int getStep(int speed, int amount) {
-		// return a value between 0 and 'amount'
-		// based on the system time. it is used
-		// in animations. 
-		int x = (int) (((getTime()-startTime)/speed)%amount);
-		if(x>(amount/2)) {
-			x = x - (((x-(amount/2))*2)-1);
-			return x;
-		} else {
-			return x;
-		}
-	}
+
 	private void logic(int delta) {
 		
 			// update player location and add gravity acceleration
@@ -482,6 +488,14 @@ public class Engine {
 				request.finished = true;
 				request.player_id = myID; 
 				request.nextLevel =  ls.getNextLevel();
+				client.sendTCP(request);
+			}
+		}
+		for (Spike spike : spikes) {
+			if(players.get(myID).intersects(spike)) {
+				GeneralToServer request = new GeneralToServer();
+				request.gotHit = true;
+				request.player_id = myID;
 				client.sendTCP(request);
 			}
 		}

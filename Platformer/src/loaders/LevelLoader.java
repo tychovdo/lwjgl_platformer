@@ -13,6 +13,7 @@ import java.util.List;
 import entities.Entity;
 import entities.roomobjects.LevelSpawnpoint;
 import entities.roomobjects.LevelSwitcher;
+import entities.roomobjects.Spike;
 import entities.roomobjects.Wall;
 
 public class LevelLoader {
@@ -23,8 +24,8 @@ public class LevelLoader {
 		// corresponding 'entity_type' in a certain 'level'@'levelpack'.
 
 		List<Entity> adder = new ArrayList<Entity>();
-		adder = loadHardcodedlevel(level);
-//		adder = ReadFileAsBytes(levelpack + "/" + level + ".lvl");
+		//adder = loadHardcodedlevel(level);
+		adder = ReadFileAsBytes(levelpack + "/" + level + ".lvl");
 		List<Entity> filteredAdder = new ArrayList<Entity>();
 		for(Entity entity : adder) {
 			if(entity.getEntityType()==entity_type) {
@@ -63,6 +64,12 @@ public class LevelLoader {
 	    		  data_out.writeInt ((int) entity.getY());
 	    		  data_out.writeInt ((int) 10);
 	    		  data_out.writeInt ((int) 10);
+	    	  case 4:
+		          data_out.writeInt ((int) entity.getX());
+		          data_out.writeInt ((int) entity.getY());
+		          data_out.writeInt ((int) entity.getWidth());
+		          data_out.writeInt ((int) entity.getHeight());
+		          break;
 	    	  }
 
 	      }
@@ -101,6 +108,8 @@ public class LevelLoader {
 						break;
 					case 3: //levelspawnpoint
 						entities.add(new LevelSpawnpoint(data[1],data[2]));
+					case 4:
+						entities.add(new Spike(data[1],data[2],data[3],data[4]));
 					}
 					count=0;
 				}
@@ -121,10 +130,15 @@ public class LevelLoader {
 		List<Entity> entities = new ArrayList<Entity>();
 		switch(level) {
 		case 1:
-			entities.add(new LevelSpawnpoint(150,150));
-			entities.add(new Wall(100,100,100,20));
-			entities.add(new Wall(300,300,100,20));
-			entities.add(new LevelSwitcher(500,400,2));
+			entities.add(new LevelSpawnpoint(50,200));
+			entities.add(new Wall(0,0,800,200));
+			entities.add(new Wall(0,350,800,250));
+			
+			entities.add(new Spike(150,200,128,10));
+			entities.add(new Spike(357,320,64,11));
+			entities.add(new Spike(524,200,256,10));
+			
+			entities.add(new LevelSwitcher(670,318,2));
 			break;
 		case 2:
 			entities.add(new LevelSpawnpoint(150,150));
@@ -132,7 +146,6 @@ public class LevelLoader {
 			entities.add(new Wall(300,300,20,200));
 			entities.add(new LevelSwitcher(500,100,3));
 			break;
-			
 		case 3:
 			entities.add(new LevelSpawnpoint(500,10));
 			entities.add(new Wall(650,450,150 ,20));
@@ -152,7 +165,7 @@ public class LevelLoader {
 			entities.add(new Wall(500,300,75,80));
 			entities.add(new Wall(575,300,75,20));
 			entities.add(new Wall(600,430,300,20));
-			
+
 			entities.add(new LevelSwitcher(700,450,1));
 			entities.add(new LevelSpawnpoint(150,150));
 			break;

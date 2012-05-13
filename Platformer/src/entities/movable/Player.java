@@ -1,12 +1,9 @@
 package entities.movable;
-import static org.lwjgl.opengl.GL11.GL_QUADS;
-import static org.lwjgl.opengl.GL11.glBegin;
-import static org.lwjgl.opengl.GL11.glColor3d;
-import static org.lwjgl.opengl.GL11.glEnd;
-import static org.lwjgl.opengl.GL11.glTexCoord2f;
-import static org.lwjgl.opengl.GL11.glVertex2i;
+import static org.lwjgl.opengl.GL11.*;
 
 import java.util.Random;
+
+import loaders.SystemInfo;
 
 import org.newdawn.slick.opengl.Texture;
 
@@ -17,8 +14,8 @@ public class Player extends AbstractAcceleratedEntity {
 	public boolean onFeet = true;
 	float red,green,blue;
 	public String name;
-	
-	//n:
+	public boolean dead = false;
+	public long deadTime;
 	public boolean exists = true;
 	public boolean reachedExit = false;
 	
@@ -42,7 +39,13 @@ public class Player extends AbstractAcceleratedEntity {
 	}
 	
 	public void draw(Texture texture, int step, float gravplier) {
-		glColor3d(red,green,blue);
+		if(dead) {
+			if(step>1) {
+				glColor3f(1f,0f,0f);
+			}	
+		} else {
+			glColor3d(red,green,blue);
+		}
 		texture.bind();
 		if(gravplier==1) {
 			glBegin(GL_QUADS);
@@ -54,9 +57,6 @@ public class Player extends AbstractAcceleratedEntity {
 		        glVertex2i((int) (x+width), (int) y); // Upper-right
 		        glTexCoord2f(0, 1);
 		        glVertex2i((int) x, (int) y); // Upper-left
-
-
-
 		    glEnd();
 		} else {
 			glBegin(GL_QUADS);
@@ -89,8 +89,11 @@ public class Player extends AbstractAcceleratedEntity {
 		}
 		return out;
 	}
-
-	
-
-
+	public void kill() {
+		dead = true;
+		deadTime = SystemInfo.getTime();
+	}
+	public void revive() {
+		dead = false;
+	}
 }

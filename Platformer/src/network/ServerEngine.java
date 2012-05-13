@@ -14,6 +14,7 @@ import network.packages.PosToServer;
 
 import loaders.KryoLoader;
 import loaders.LevelLoader;
+import loaders.SystemInfo;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
@@ -23,12 +24,14 @@ import com.esotericsoftware.kryonet.Server;
 import entities.movable.Player;
 import entities.roomobjects.LevelSpawnpoint;
 import entities.roomobjects.LevelSwitcher;
+import entities.roomobjects.Spike;
 import entities.roomobjects.Wall;
 
 public class ServerEngine {
 	// constants:
 	public static final int WIDTH = 800;
 	public static final int HEIGHT = 600;
+	public static final boolean hardcore = false;
 	
 	// room data:
 	private int level = 1;
@@ -40,6 +43,8 @@ public class ServerEngine {
 	List<Player> players = new ArrayList<Player>();
 	List<Wall> walls = new ArrayList<Wall>();
 	List<LevelSwitcher> levelswitchers = new ArrayList<LevelSwitcher>();
+	List<Spike> spikes = new ArrayList<Spike>();
+	
 	LevelSpawnpoint spawn = new LevelSpawnpoint(150, 150);
 	
 	// network:
@@ -63,7 +68,29 @@ public class ServerEngine {
 			   public void received (Connection connection, Object object) {
 			      if (object instanceof GeneralToServer) {
 			         GeneralToServer request = (GeneralToServer)object;
-			         gravplier = request.gravplier;
+			         if(request.gotHit) {
+			        	 if (hardcore) {
+			        		 // reset all player pos, forceupdate, reset/update 'locked'
+				        	 for(int i=0;i<players.size();i++) {
+					        	 players.get(i).setX(spawn.getX());
+					        	 players.get(i).setY(spawn.getX());
+					        	 players.get(i).kill();
+					        	 gravplier = 1;
+					        	 players.get(i).reachedExit = false;
+					        	 sendGeneral(true,i);
+					        	 checkLocked();
+				        	 }
+			        	 } else {
+			        		 // reset player_id pos, forceupdate
+			        		 players.get(request.player_id).setX(spawn.getX());
+			        		 players.get(request.player_id).setX(spawn.getX());
+				        	 players.get(request.player_id).kill();
+			        		 gravplier = 1;
+			        		 sendGeneral(true,request.player_id);
+			        	 }
+			         } else {
+			        	 gravplier = request.gravplier;
+			         }
 			      }
 			      if (object instanceof PosToServer) {
 			    	  		//receive player position
@@ -76,8 +103,8 @@ public class ServerEngine {
 					         int x = (int) players.get(request.player_id).getX();
 					         int y = (int) players.get(request.player_id).getY();
 					         if((x<0 || x>WIDTH)||(y<0 || y>HEIGHT)) {
-					        	 players.get(request.player_id).setX(150);
-					        	 players.get(request.player_id).setY(150);
+					        	 players.get(request.player_id).setX(spawn.getX());
+					        	 players.get(request.player_id).setY(spawn.getX());
 					        	 sendGeneral(true,i);
 					         } else {
 					        	 sendGeneral(false,i);
@@ -136,6 +163,7 @@ public class ServerEngine {
 			    		  LevelToClient response = new LevelToClient();
 			    		  response.walls = walls;
 			    		  response.levelswitchers = levelswitchers;
+			    		  response.spikes = spikes;
 			    		  connection.sendTCP(response);
 			    	  }			    	  
 			      }
@@ -164,6 +192,10 @@ public class ServerEngine {
 		if(levelswitchers.size()==0) {
 			System.out.println("No levelswitcher set on this map...");
 		}
+		
+		spikes.clear();
+		spikes.addAll((Collection<? extends Spike>) LevelLoader.load("levelpack0",level,4));
+		
 		
 		List<LevelSpawnpoint> temp = new ArrayList<LevelSpawnpoint>();
 		temp.clear();
@@ -196,7 +228,14 @@ public class ServerEngine {
 		response.forced = forced;
 		response.player_id = player_id;
 		response.x = players.get(player_id).getX(); 
-		response.y = players.get(player_id).getY();   
+		response.y = players.get(player_id).getY();
+		if(players.get(player_id).dead) {
+			if(SystemInfo.getTime()>players.get(player_id).deadTime+1000) {
+				players.get(player_id).revive();
+				response.forced = true;
+			}
+		}
+		response.dead = players.get(player_id).dead;
 		response.gravplier = gravplier;
 		response.exists = players.get(player_id).exists;
 		response.locked = locked;

@@ -25,6 +25,7 @@ public class KryoLoader {
 		kryo.register(entities.roomobjects.Wall.class);
 		kryo.register(entities.roomobjects.LevelSwitcher.class);
 		kryo.register(java.awt.Rectangle.class);
+		kryo.register(entities.roomobjects.Spike.class);
 		
 		return kryo;
 	}

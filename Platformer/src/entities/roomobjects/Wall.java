@@ -19,17 +19,18 @@ public class Wall extends AbstractEntity {
 	public void draw() {
 		
 		//full rectangle:
-		//glColor3f(0f, 0f, 0.2f);
-		//glRectd(x, y, x + width, y + height);
+		glColor3f(0f, 0f, 0.2f);
+		glRectd(x, y, x + width, y + height);
 		
 		//bordered rectangle:
-		glColor3f(0f, 0f, 0.2f);
-		glRectd(x,y,x+width,y+4);
-		glRectd(x,y+height-4,x+width,y+height);
-		glRectd(x,y+4,x+4,y+height-4);
-		glRectd(x+width-4,y+4,x+width,y+height-4);
-		glColor3f(0.2f,0.5f,1f);
-		glRectd(x+4,y+4,x+width-4,y+height-4);
+//		int bordersize=4;
+//		glColor3f(0f, 0f, 0.2f);
+//		glRectd(x,y,x+width,y+bordersize);
+//		glRectd(x,y+height-bordersize,x+width,y+height);
+//		glRectd(x,y+bordersize,x+bordersize,y+height-bordersize);
+//		glRectd(x+width-bordersize,y+bordersize,x+width,y+height-bordersize);
+//		glColor3f(0.2f,0.5f,1f);
+//		glRectd(x+bordersize,y+bordersize,x+width-bordersize,y+height-bordersize);
 	}
 
 	@Override
