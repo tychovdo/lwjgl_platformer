@@ -28,7 +28,7 @@ public class Wall extends AbstractEntity {
 		glRectd(x,y+height-4,x+width,y+height);
 		glRectd(x,y+4,x+4,y+height-4);
 		glRectd(x+width-4,y+4,x+width,y+height-4);
-		glColor3f(0.3f,0.5f,0.6f);
+		glColor3f(0.2f,0.5f,1f);
 		glRectd(x+4,y+4,x+width-4,y+height-4);
 	}
 

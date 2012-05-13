@@ -26,12 +26,13 @@ import java.util.List;
 import javax.swing.JOptionPane;
 
 import loaders.KryoLoader;
-import network.GeneralToClient;
-import network.GeneralToServer;
-import network.LevelToClient;
-import network.LevelToServer;
-import network.LoginToServer;
-import network.PosToServer;
+import network.ServerEngine;
+import network.packages.GeneralToClient;
+import network.packages.GeneralToServer;
+import network.packages.LevelToClient;
+import network.packages.LevelToServer;
+import network.packages.LoginToServer;
+import network.packages.PosToServer;
 
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
@@ -41,7 +42,6 @@ import org.lwjgl.opengl.DisplayMode;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
-import server.ServerEngine;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Client;
@@ -68,11 +68,11 @@ public class Engine {
 	// room data
 	private String levelpack;   
 	private int level;
-	private int playerAmount;   
+	private int maxPlayers;   
 	private int levelPreviousFrame = 1337;  //when 'level!=levelPreviousFrame' a new level is asked from server
 	private int myID;           				//the player_id from the player on this client
 	private boolean locked;     				//when 'locked=false' only 1 more player is needed to go to next level
-	private int gravplier = 1; 				//gravity multiplier (gravplier=-1 on reversed gravity)
+	private int gravplier = 1; 				;//gravity multiplier (gravplier=-1 on reversed gravity)
 	
 
 	// input:
@@ -94,12 +94,14 @@ public class Engine {
 	private List<Player> players = new ArrayList<Player>();
 	private List<Wall> walls = new ArrayList<Wall>();
 	private List<LevelSwitcher> levelswitchers = new ArrayList<LevelSwitcher>();
+	
 		// networking:
 	ServerEngine singleplayerServer;
 	Client client;
 	Kryo kryo;
+	private boolean isConnected = false;
 	private boolean gpCheck = true;     //needed for synchronising with serverside gravplier
-
+	
 
 	
 	public Engine() {
@@ -136,8 +138,8 @@ public class Engine {
 
 	private void init() {
 		setUpSettings();
-		setUpEntities();	
 		setUpNetworking();
+		setUpEntities();	
 		setUpDisplay();
 		setUpOpenGL();
 		setUpResources();
@@ -217,7 +219,7 @@ public class Engine {
 		server_port2 = 54777;
 		levelpack = "levelpack0";
 		level = 1;
-		playerAmount = 8;
+		maxPlayers = 8;
 		
 		if(server_ip.equals("singleplayer")) {
 			singleplayer = true;
@@ -230,7 +232,7 @@ public class Engine {
 		System.out.println("Server Port 2:      " + server_port2);
 		System.out.println("Levelpack:          " + levelpack);
 		System.out.println("First level:        " + level);
-		System.out.println("Amount of players:  " + playerAmount);
+		System.out.println("Amount of players:  " + maxPlayers);
 	}
 	private void setUpNetworking() {
 		// hosts server inside of
@@ -245,15 +247,15 @@ public class Engine {
 		kryo = KryoLoader.register(kryo);
 		client.start();
 		
-
-		try { // connect with server:
-			client.connect(5000, server_ip, server_port1, server_port2);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.out.println("Couldn't connect with server...");
-			System.exit(0);
+		while(!isConnected) {
+			try { // connect with server:
+				client.connect(5000, server_ip, server_port1, server_port2);
+				isConnected=true;
+			} catch (IOException e) {
+				System.out.println("Failed to connect with server...");
+				server_ip=JOptionPane.showInputDialog(null,"Failed to connect with server...\n Server IP:");
+			}
 		}
-		
 		
 		client.addListener(new Listener() { // Listener for incoming packages
 			public void received (Connection connection, Object object) {
@@ -323,7 +325,7 @@ public class Engine {
 	}
 	private void setUpResources() {
 		// load character textures
-		for(int i=0;i<playerAmount;i++) {
+		for(int i=0;i<maxPlayers;i++) {
 			textures.add(loadTexture("/sprites/char"+i+".png"));
 		}
 		
@@ -335,10 +337,9 @@ public class Engine {
 		
 	}
 	private void setUpEntities() {
-		// load yourself (other will
-		// will be added when server
-		// sends their posResponse's
-		players.add(new Player(0,0,32,32));	
+		for(int i=0;i<maxPlayers;i++) {
+			players.add(new Player(0,0,32,32));	
+		}
 		players.get(myID).setX(150);
 		players.get(myID).setY(150);
 	}

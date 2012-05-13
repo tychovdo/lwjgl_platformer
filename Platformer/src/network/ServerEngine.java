@@ -1,18 +1,19 @@
-package server;
+package network;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import network.packages.GeneralToClient;
+import network.packages.GeneralToServer;
+import network.packages.LevelToClient;
+import network.packages.LevelToServer;
+import network.packages.LoginToServer;
+import network.packages.PosToServer;
+
 import loaders.KryoLoader;
 import loaders.LevelLoader;
-import network.GeneralToClient;
-import network.GeneralToServer;
-import network.LevelToClient;
-import network.LevelToServer;
-import network.LoginToServer;
-import network.PosToServer;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryonet.Connection;
@@ -89,6 +90,7 @@ public class ServerEngine {
 				      players.add(new Player(0,0,20,20));
 				      players.get(request.player_id).name = request.name;
 				      playerAmount++;
+				      System.out.println(playerAmount);
 				      checkLocked();
 				  }
 			      if (object instanceof LevelToServer) {

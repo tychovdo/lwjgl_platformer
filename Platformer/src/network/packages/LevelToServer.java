@@ -1,4 +1,4 @@
-package network;
+package network.packages;
 
 public class LevelToServer {
 	public int player_id;
