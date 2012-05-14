@@ -1,7 +1,8 @@
 package entities.roomobjects;
 
-import entities.AbstractEntity;
+import static org.lwjgl.opengl.GL11.*;
 
+import entities.AbstractEntity;
 public class LevelSpawnpoint extends AbstractEntity {
 	
 	public LevelSpawnpoint(int x, int y) {
@@ -12,8 +13,8 @@ public class LevelSpawnpoint extends AbstractEntity {
 	
 	@Override
 	public void draw() {
-		// TODO Auto-generated method stub
-		
+		glColor4f(1f,0f,0f,0.5f);
+		glRectd(x,y,x+32,y+32);
 	}
 	@Override
 	public void update(int delta) {

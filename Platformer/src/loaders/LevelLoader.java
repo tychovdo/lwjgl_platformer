@@ -45,26 +45,31 @@ public class LevelLoader {
 	      DataOutputStream data_out = new DataOutputStream (file_output);
 	      for (int i=0; i < entities.size(); i++) {
 	    	  Entity entity = entities.get(i);
-	    	  data_out.writeInt ((int) entity.getEntityType());
+	    	  
 	    	  switch(entity.getEntityType()) {
 	    	  case 1:
+	    		  data_out.writeInt ((int) entity.getEntityType());
 		          data_out.writeInt ((int) entity.getX());
 		          data_out.writeInt ((int) entity.getY());
 		          data_out.writeInt ((int) entity.getWidth());
 		          data_out.writeInt ((int) entity.getHeight());
 		          break;
 	    	  case 2:
+	    		  data_out.writeInt ((int) entity.getEntityType());
 		          data_out.writeInt ((int) entity.getX());
 		          data_out.writeInt ((int) entity.getY());
 		          data_out.writeInt ((int) ((LevelSwitcher) entity).getNextLevel());
 		          data_out.writeInt ((int) 10);
 		          break;
 	    	  case 3:
+	    		  data_out.writeInt ((int) entity.getEntityType());
 	    		  data_out.writeInt ((int) entity.getX());
 	    		  data_out.writeInt ((int) entity.getY());
 	    		  data_out.writeInt ((int) 10);
 	    		  data_out.writeInt ((int) 10);
+	    		  break;
 	    	  case 4:
+	    		  data_out.writeInt ((int) entity.getEntityType());
 		          data_out.writeInt ((int) entity.getX());
 		          data_out.writeInt ((int) entity.getY());
 		          data_out.writeInt ((int) entity.getWidth());
@@ -99,7 +104,9 @@ public class LevelLoader {
 				if(count<4) {
 					count++;
 				} else {
+					System.out.println(data[0]+":"+data[1]+","+data[2]+","+data[3]+","+data[4]);
 					switch(data[0]) {
+					
 					case 1: //walls
 						entities.add(new Wall(data[1],data[2],data[3],data[4]));
 						break;
@@ -108,8 +115,10 @@ public class LevelLoader {
 						break;
 					case 3: //levelspawnpoint
 						entities.add(new LevelSpawnpoint(data[1],data[2]));
+						break;
 					case 4:
 						entities.add(new Spike(data[1],data[2],data[3],data[4]));
+						break;
 					}
 					count=0;
 				}

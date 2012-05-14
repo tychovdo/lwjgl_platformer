@@ -74,20 +74,16 @@ public class LevelEditor {
 
 	
 	public LevelEditor() {
-		
-		
-		
 		init();
 		
-		try {
-		LevelLoader.writeFileAsBytes("levelpack0/1.lvl", LevelLoader.loadHardcodedlevel(1));
-		LevelLoader.writeFileAsBytes("levelpack0/2.lvl", LevelLoader.loadHardcodedlevel(2));
-		LevelLoader.writeFileAsBytes("levelpack0/3.lvl", LevelLoader.loadHardcodedlevel(3));
-		LevelLoader.writeFileAsBytes("levelpack0/4.lvl", LevelLoader.loadHardcodedlevel(4));
-		
-	} catch (IOException e) {
-		e.printStackTrace();
-	}
+//		try {
+//			LevelLoader.writeFileAsBytes("levelpack0/1.lvl", LevelLoader.loadHardcodedlevel(1));
+//			LevelLoader.writeFileAsBytes("levelpack0/2.lvl", LevelLoader.loadHardcodedlevel(2));
+//			LevelLoader.writeFileAsBytes("levelpack0/3.lvl", LevelLoader.loadHardcodedlevel(3));
+//			LevelLoader.writeFileAsBytes("levelpack0/4.lvl", LevelLoader.loadHardcodedlevel(4));
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 		while (gameloop) {
 			
 			input();	
@@ -176,6 +172,9 @@ public class LevelEditor {
 				e.printStackTrace();
 			}
 			keyTimer=15;
+		} else if (Keyboard.isKeyDown(Keyboard.KEY_F)&&keyTimer<1) {
+			entity_type = 4;
+			keyTimer=15;
 		}
 
 		
@@ -188,12 +187,21 @@ public class LevelEditor {
 				walls.remove(walls.size()-1);
 			}
 			break;
+		case 4:
+			if(spikes.size()>0) {
+				spikes.remove(spikes.size()-1);
+			}
+			break;
 		}
 	}
 	private void createEntity() {
 		switch(entity_type ) {
 		case 1:
 			walls.add(new Wall(Math.min(first_x, second_x),Math.min(first_y, second_y),Math.abs(first_x-second_x),Math.abs(first_y-second_y)));
+			break;
+		case 4:
+			int temp = second_x % 32;
+			spikes.add(new Spike(Math.min(first_x, second_x),Math.min(first_y, second_y),Math.abs(first_x-second_x)-temp-1,10));
 			break;
 		}
 	}
@@ -274,6 +282,7 @@ public class LevelEditor {
 		for (Wall wall : walls) {
 			wall.draw();
 		}
+		spawn.draw();
 
 
 		// draw Textured entities:
