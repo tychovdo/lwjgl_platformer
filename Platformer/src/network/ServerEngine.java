@@ -73,7 +73,7 @@ public class ServerEngine {
 			        		 // reset all player pos, forceupdate, reset/update 'locked'
 				        	 for(int i=0;i<players.size();i++) {
 					        	 players.get(i).setX(spawn.getX());
-					        	 players.get(i).setY(spawn.getX());
+					        	 players.get(i).setY(spawn.getY());
 					        	 players.get(i).kill();
 					        	 gravplier = 1;
 					        	 players.get(i).reachedExit = false;
@@ -83,7 +83,7 @@ public class ServerEngine {
 			        	 } else {
 			        		 // reset player_id pos, forceupdate
 			        		 players.get(request.player_id).setX(spawn.getX());
-			        		 players.get(request.player_id).setX(spawn.getX());
+			        		 players.get(request.player_id).setY(spawn.getY());
 				        	 players.get(request.player_id).kill();
 			        		 gravplier = 1;
 			        		 sendGeneral(true,request.player_id);

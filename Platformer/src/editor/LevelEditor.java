@@ -51,7 +51,7 @@ public class LevelEditor {
 	int second_y;
 	private int entity_type = 1;
 	private boolean mousePressed;
-	
+	private int extra = 0;
 	
 	// fps settings:
 	SystemInfo sysInfo = new SystemInfo();
@@ -117,9 +117,17 @@ public class LevelEditor {
 	private void input() { //TODO: external control settings, dynamic player amount
 			
 		// Input:
-        if (mouseEnabled || Mouse.isButtonDown(0)) {
+        if (mouseEnabled || Mouse.isButtonDown(0) || Mouse.isButtonDown(1)) {
             mouseEnabled = true;
-            boolean mouseClicked = Mouse.isButtonDown(0);
+            boolean mouseClicked = false;;
+            
+            if(Mouse.isButtonDown(0)) {
+            	extra = 0;
+            	mouseClicked = true;
+            } else if (Mouse.isButtonDown(1)) {
+            	extra = 1;
+            	mouseClicked = true;
+            }
             if (mouseClicked) {
             	if(!mousePressed) {
             		first_x = Mouse.getX();
@@ -130,6 +138,9 @@ public class LevelEditor {
             	if(mousePressed) {
             		second_x = Mouse.getX();
             		second_y = Mouse.getY();
+            		if(entity_type==4) {
+            			second_x = second_x-(second_x % 32);
+            		}
             		createEntity();
             		mousePressed=false;
             	}
@@ -172,7 +183,16 @@ public class LevelEditor {
 				e.printStackTrace();
 			}
 			keyTimer=15;
-		} else if (Keyboard.isKeyDown(Keyboard.KEY_F)&&keyTimer<1) {
+		} else if (Keyboard.isKeyDown(Keyboard.KEY_1)&&keyTimer<1) {
+			entity_type = 1;
+			keyTimer=15;
+		} else if (Keyboard.isKeyDown(Keyboard.KEY_2)&&keyTimer<1) {
+			entity_type = 2;
+			keyTimer=15;
+		} else if (Keyboard.isKeyDown(Keyboard.KEY_3)&&keyTimer<1) {
+			entity_type = 3;
+			keyTimer=15;
+		} else if (Keyboard.isKeyDown(Keyboard.KEY_4)&&keyTimer<1) {
 			entity_type = 4;
 			keyTimer=15;
 		}
@@ -200,12 +220,12 @@ public class LevelEditor {
 			walls.add(new Wall(Math.min(first_x, second_x),Math.min(first_y, second_y),Math.abs(first_x-second_x),Math.abs(first_y-second_y)));
 			break;
 		case 4:
-			int temp = second_x % 32;
-			spikes.add(new Spike(Math.min(first_x, second_x),Math.min(first_y, second_y),Math.abs(first_x-second_x)-temp-1,10));
+			int difx = second_x-first_x;
+			int real_width = difx - (difx%32);
+			spikes.add(new Spike(first_x,first_y,real_width,10+extra));
 			break;
 		}
 	}
-
 
 
 	private void setUpSettings() {
@@ -306,7 +326,39 @@ public class LevelEditor {
 		glDisable(GL_TEXTURE_2D);
 		if(mousePressed) {
 			GL11.glColor4f(1f,1f,1f,0.5f);
-			glRectd(first_x,first_y,Mouse.getX(),Mouse.getY());
+
+    		if(entity_type==4) {
+    			int real_x = Mouse.getX();
+    			int difx = Mouse.getX()-first_x;
+    			real_x = Mouse.getX() - (difx%32);
+    			glRectd(first_x,first_y,real_x,first_y+32);
+    		} else {
+    			glRectd(first_x,first_y,Mouse.getX(),Mouse.getY());
+    		}
+			
+		}
+		
+		switch(entity_type) {
+		case 1:
+			Wall mousewall = new Wall(Mouse.getX()+5,Mouse.getY()-25,20,20);
+			mousewall.draw();
+			break;
+		case 2:
+			glEnable(GL_TEXTURE_2D);
+			glColor3f(1f,1f,1f);
+			LevelSwitcher mousels = new LevelSwitcher(Mouse.getX()+5,Mouse.getY()-37,1);
+			mousels.draw(tex_arrow);
+			break;
+		case 3:
+			LevelSpawnpoint mousespawn = new LevelSpawnpoint(Mouse.getX()+5,Mouse.getY()-37);
+			mousespawn.draw();
+			break;
+		case 4:
+			Spike mousespike = new Spike(Mouse.getX()+5,Mouse.getY()-35,32,10);
+			mousespike.draw(tex_mine[0]);
+			
+			break;
+			
 		}
 		
 	}

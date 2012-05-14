@@ -104,7 +104,6 @@ public class LevelLoader {
 				if(count<4) {
 					count++;
 				} else {
-					System.out.println(data[0]+":"+data[1]+","+data[2]+","+data[3]+","+data[4]);
 					switch(data[0]) {
 					
 					case 1: //walls

@@ -49,6 +49,9 @@ public class Spike extends AbstractEntity {
 				glColor3f(0f, 0f, 0.2f);
 				glRectd(x-bordersize,y,x,y+28);
 				glRectd(x+width,y,x+width+bordersize,y+28);
+				
+				if(width%32!=0)
+					System.out.println(width);
 
 			    break;
 			case 1: //on roof:
